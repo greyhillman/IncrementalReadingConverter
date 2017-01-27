@@ -1,0 +1,22 @@
+[package]
+name = "incremental_reading_converter"
+version = "0.1.0"
+authors = ["Grey Hill <infogreytech@gmail.com>"]
+
+[dependencies]
+clap = "2.20.3"
+xmltree = "0.3"
+
+[lib]
+name = "anki_convert"
+path = "src/lib/anki_convert.rs"
+
+[[bin]]
+name = "anki_convert"
+path = "src/bin/anki_convert.rs"
+
+[[bin]]
+name = "group_lines"
+path = "src/bin/group_lines.rs"
+
+
