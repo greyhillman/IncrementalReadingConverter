@@ -6,6 +6,7 @@ authors = ["Grey Hill <infogreytech@gmail.com>"]
 [dependencies]
 clap = "2.20.3"
 xmltree = "0.3"
+html5ever = "0.14.1"
 
 [lib]
 name = "anki_convert"
