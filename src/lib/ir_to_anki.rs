@@ -4,7 +4,6 @@ use self::xmltree::Element;
 use std::iter::repeat;
 
 use group_lines;
-use ir;
 
 fn handle(element: &Element) -> String {
     match element.name.as_str() {
@@ -91,7 +90,8 @@ fn handle_text(element: &Element, format: (&str, &str)) -> String {
     }
 }
 
-pub fn convert_file(contents: Element) -> String {
+pub fn convert_file(contents: &str) -> String {
+    let contents = Element::parse(contents.as_bytes()).unwrap();
     handle(&contents).trim().to_string()
 }
 
@@ -99,81 +99,77 @@ pub fn convert_file(contents: Element) -> String {
 mod tests {
     use super::*;
 
-    fn to_xml(contents: &str) -> Element {
-        Element::parse(contents.as_bytes()).unwrap()
-    }
-
     #[test]
     fn convert_par() {
-        let contents = to_xml("\
+        let contents = "\
         <body>\
         <p>
             <text>Test
             test</text>
         </p>\
-        </body>");
+        </body>";
         assert_eq!(convert_file(contents), String::from("Test test"));
     }
 
     #[test]
     fn convert_par_par() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <p><text>Test</text></p>
         <p><text>Test</text></p>
-        </body>");
+        </body>";
         let result = "Test\n\nTest".to_string();
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_par_sub() {
-        let contents = to_xml("\
+        let contents = "\
         <body>\
         <p>
             <text>Test</text>
             <sub>2</sub>
         </p>
-        </body>");
+        </body>";
         let result = String::from("Test_{2}");
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_par_sup() {
-        let contents = to_xml("\
+        let contents = "\
         <body>\
         <p>
             <text>Test</text>
             <sup>2</sup>
         </p>
-        </body>");
+        </body>";
         let result = String::from("Test^{2}");
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_figure() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <figure>
         <text>Figure 1</text>
         <img src=\"test.png\" />
         <text>Caption</text>
         </figure>
-        </body>");
+        </body>";
         let result = "Figure 1\n<img src=\"test.png\" />\nCaption".to_string();
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_par_figure() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <p><text>Here is the following figure:</text></p>
         <figure>
         <text>Figure 1</text>
         <img src=\"test.png\" />
         <text>Caption</text>
         </figure>
-        </body>");
+        </body>";
         let result = "Here is the following figure:\n\n\
                       Figure 1\n<img src=\"test.png\" />\nCaption".to_string();
         assert_eq!(convert_file(contents), result);
@@ -181,14 +177,14 @@ mod tests {
 
     #[test]
     fn convert_figure_par() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <figure>
         <text>Figure 1</text>
         <img src=\"test.png\" />
         <text>Caption</text>
         </figure>
         <p><text>The above figure</text></p>
-        </body>");
+        </body>";
         let result = "Figure 1\n<img src=\"test.png\" />\nCaption\n\n\
                       The above figure".to_string();
         assert_eq!(convert_file(contents), result);
@@ -196,33 +192,33 @@ mod tests {
 
     #[test]
     fn convert_ul() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <ul>
         <li><text>a</text></li>
         <li><text>b</text></li>
         <li><text>c</text></li>
         </ul>
-        </body>");
+        </body>";
         let result = "- a\n- b\n- c".to_string();
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_ol() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <ol>
         <li><text>a</text></li>
         <li><text>b</text></li>
         <li><text>c</text></li>
         </ol>
-        </body>");
+        </body>";
         let result = "1) a\n2) b\n3) c".to_string();
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_nested_ul_ul() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <ul>
         <li><text>a</text></li>
         <li><text>b</text>
@@ -233,14 +229,14 @@ mod tests {
         </li>
         <li><text>c</text></li>
         </ul>
-        </body>");
+        </body>";
         let result = "- a\n- b\n--- b1\n--- b2\n- c".to_string();
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_nested_ol_ul() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <ol>
         <li><text>a</text></li>
         <li><text>b</text>
@@ -251,14 +247,14 @@ mod tests {
         </li>
         <li><text>c</text></li>
         </ol>
-        </body>");
+        </body>";
         let result = "1) a\n2) b\n--- b1\n--- b2\n3) c".to_string();
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_nested_ul_ol() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <ul>
         <li><text>a</text></li>
         <li><text>b</text>
@@ -269,14 +265,14 @@ mod tests {
         </li>
         <li><text>c</text></li>
         </ul>
-        </body>");
+        </body>";
         let result = "- a\n- b\n--1) b1\n--2) b2\n- c".to_string();
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_nested_ol_ol() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <ol>
         <li><text>a</text></li>
         <li><text>b</text>
@@ -287,63 +283,63 @@ mod tests {
         </li>
         <li><text>c</text></li>
         </ol>
-        </body>");
+        </body>";
         let result = "1) a\n2) b\n--1) b1\n--2) b2\n3) c".to_string();
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_par_ul() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <p><text>List:</text></p>
         <ul>
         <li><text>a</text></li>
         <li><text>b</text></li>
         <li><text>c</text></li>
         </ul>
-        </body>");
+        </body>";
         let result = "List:\n\n- a\n- b\n- c".to_string();
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_par_ol() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <p><text>List:</text></p>
         <ol>
         <li><text>a</text></li>
         <li><text>b</text></li>
         <li><text>c</text></li>
         </ol>
-        </body>");
+        </body>";
         let result = "List:\n\n1) a\n2) b\n3) c".to_string();
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_ul_par() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <ul>
         <li><text>a</text></li>
         <li><text>b</text></li>
         <li><text>c</text></li>
         </ul>
         <p><text>List</text></p>
-        </body>");
+        </body>";
         let result = "- a\n- b\n- c\n\nList".to_string();
         assert_eq!(convert_file(contents), result);
     }
 
     #[test]
     fn convert_ol_par() {
-        let contents = to_xml("<body>
+        let contents = "<body>
         <ol>
         <li><text>a</text></li>
         <li><text>b</text></li>
         <li><text>c</text></li>
         </ol>
         <p><text>List</text></p>
-        </body>");
+        </body>";
         let result = "1) a\n2) b\n3) c\n\nList".to_string();
         assert_eq!(convert_file(contents), result);
     }
