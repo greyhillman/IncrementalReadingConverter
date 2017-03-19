@@ -32,11 +32,16 @@ fn main() {
     let mut contents = String::new();
     file.read_to_string(&mut contents).expect("Unable to read file.");
 
+    let file_type = filename.split('.').last()
+        .expect("Failed to get filetype.");
+
+    let new_contents = anki_convert::convert_file(&file_type, &contents);
+
     let output_filename = filename.to_string() + ".out";
     let output_file_path = &Path::new(&output_filename);
-    let mut output_file = File::create(output_file_path).expect("Failed to create file.");
+    let mut output_file = File::create(output_file_path)
+        .expect("Failed to create file.");
 
-    let new_contents = anki_convert::convert_file(&contents);
     output_file.write_all(&new_contents.into_bytes().as_slice())
         .expect("Failed to write to file.");
 }
