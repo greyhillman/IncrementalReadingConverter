@@ -41,6 +41,13 @@ fn main() {
     let output_file_path = &Path::new(&output_filename);
     let mut output_file = File::create(output_file_path)
         .expect("Failed to create file.");
+<<<<<<< HEAD
+=======
+
+    let file_type = filename.split('.').last()
+        .expect("Failed to determine filetype.");
+    let new_contents = anki_convert::convert_file(&file_type, &contents);
+>>>>>>> c60fe45... Continue work
 
     output_file.write_all(&new_contents.into_bytes().as_slice())
         .expect("Failed to write to file.");

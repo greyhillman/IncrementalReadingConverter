@@ -30,7 +30,8 @@ fn handle_list(depth: u8, element: &Element) -> String {
 }
 
 fn handle_li(depth: u8, element: &Element) -> String {
-    element.children.iter()
+    element.children
+        .iter()
         .map(|x| handle_list(depth, x))
         .fold(String::new(), |acc, x| acc + &x + "\n")
 }
@@ -43,9 +44,12 @@ fn get_indent(depth: u8) -> String {
 }
 
 fn handle_ul(depth: u8, element: &Element) -> String {
-    element.children.iter()
+    element.children
+        .iter()
         .map(|x| format!("{} {}", get_indent(depth), handle_list(depth, x)))
-        .fold(String::new(), |acc, x| acc + &x + "\n").trim().to_string()
+        .fold(String::new(), |acc, x| acc + &x + "\n")
+        .trim()
+        .to_string()
 }
 
 fn handle_ol(depth: u8, element: &Element) -> String {
@@ -63,15 +67,16 @@ fn handle_ol(depth: u8, element: &Element) -> String {
 }
 
 fn handle_img(element: &Element) -> String {
-    let attributes = element.attributes.iter()
-        .fold(String::new(), |acc, (k, v)| {
-            format!("{}{}=\"{}\" ", acc, k, v)
-        });
+    let attributes = element.attributes
+        .iter()
+        .fold(String::new(),
+              |acc, (k, v)| format!("{}{}=\"{}\" ", acc, k, v));
     format!("<img {}/>", attributes)
 }
 
 fn handle_children(element: &Element, sep: &str) -> String {
-    element.children.iter()
+    element.children
+        .iter()
         .map(|x| handle(x))
         .fold(String::new(), |acc, x| acc + &x + sep)
 }
