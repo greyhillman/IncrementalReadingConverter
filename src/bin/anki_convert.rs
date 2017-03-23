@@ -19,6 +19,10 @@ fn get_arguments<'a>() -> ArgMatches<'a> {
             .help("The name of the file to convert")
             .required(true)
             .index(1))
+        .arg(Arg::with_name("debug")
+            .long("debug")
+            .takes_value(false)
+            .hidden(true))
         .get_matches()
 }
 
@@ -32,15 +36,16 @@ fn main() {
     let mut contents = String::new();
     file.read_to_string(&mut contents).expect("Unable to read file.");
 
-    let file_type = filename.split('.').last()
+    let file_type = filename.split('.')
+        .last()
         .expect("Failed to get filetype.");
 
-    let new_contents = anki_convert::convert_file(&file_type, &contents);
+    let debug = matches.is_present("debug");
+    let new_contents = anki_convert::convert_file(debug, &file_type, &contents);
 
     let output_filename = filename.to_string() + ".out";
     let output_file_path = &Path::new(&output_filename);
-    let mut output_file = File::create(output_file_path)
-        .expect("Failed to create file.");
+    let mut output_file = File::create(output_file_path).expect("Failed to create file.");
 
     output_file.write_all(&new_contents.into_bytes().as_slice())
         .expect("Failed to write to file.");
