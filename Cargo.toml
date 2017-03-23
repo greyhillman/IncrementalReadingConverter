@@ -6,6 +6,8 @@ authors = ["Grey Hill <infogreytech@gmail.com>"]
 [dependencies]
 clap = "2.20.3"
 xmltree = "0.3"
+html5ever = "0.14.1"
+regex = "*"
 
 [lib]
 name = "anki_convert"
@@ -18,5 +20,4 @@ path = "src/bin/anki_convert.rs"
 [[bin]]
 name = "group_lines"
 path = "src/bin/group_lines.rs"
-
 

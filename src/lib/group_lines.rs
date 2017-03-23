@@ -77,7 +77,8 @@ mod tests {
     #[test]
     fn indented_pars_with_line_sep() {
         let contents = "    abc\n    def\n\n$ a = b $\n\n    thus";
-        assert_eq!(group_lines_file(contents), "abc def\n\n$ a = b $\n\nthus".to_string());
+        assert_eq!(group_lines_file(contents),
+                   "abc def\n\n$ a = b $\n\nthus".to_string());
     }
 
     #[test]
