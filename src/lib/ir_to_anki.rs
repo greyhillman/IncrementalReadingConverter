@@ -68,11 +68,12 @@ fn handle_ol(depth: u8, element: &Element) -> String {
 }
 
 fn handle_img(element: &Element) -> String {
-    let attributes = element.attributes
-        .iter()
-        .fold(String::new(),
-              |acc, (k, v)| format!("{}{}=\"{}\" ", acc, k, v));
-    format!("<img {}/>", attributes)
+    let (_, href) = element.attributes.iter()
+        .find(|&(ref k, _)| *k == "href")
+        .unwrap();
+    let file = href.split("/").last().unwrap();
+
+    format!("<img href=\"{}\" />", file)
 }
 
 fn handle_children(element: &Element) -> String {
@@ -312,6 +313,13 @@ mod tests {
     fn text_in_sup() {
         let contents = "<body><sup><text>a</text></sup></body>";
         let result = "^{a}".to_string();
+        assert_eq!(convert_file(contents), result);
+    }
+
+    #[test]
+    fn shorten_img_href() {
+        let contents = "<body><img href=\"a/b/c/d.png\" /></body>";
+        let result = "<img href=\"d.png\" />".to_string();
         assert_eq!(convert_file(contents), result);
     }
 }
