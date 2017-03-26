@@ -17,6 +17,10 @@ fn multi_to_single(lines: &str) -> String {
         .to_string()
 }
 
+pub fn group_lines(contents: &str) -> String {
+    multi_to_single(contents)
+}
+
 pub fn group_lines_file(contents: &str) -> String {
     contents.lines()
         .map(|x| x.trim())
