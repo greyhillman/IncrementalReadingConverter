@@ -1,7 +1,7 @@
 extern crate xmltree;
 use self::xmltree::Element;
 
-use group_lines::group_lines_file;
+use group_lines::group_lines;
 
 fn handle(element: &Element) -> String {
     match element.name.as_str() {
@@ -10,6 +10,7 @@ fn handle(element: &Element) -> String {
         "text" => handle_text("", element, ""),
         "sub" => handle_text("_{", element, "}"),
         "sup" => handle_text("^{", element, "}"),
+        "code" => handle_text("`", element, "`"),
         "img" => format!("\n{}\n", handle_img(element)),
         "ol" | "ul" | "li" => handle_list(0, element),
         _ => String::new(),
@@ -86,15 +87,15 @@ fn handle_children(element: &Element) -> String {
 
 fn handle_text(start: &str, element: &Element, end: &str) -> String {
     let children_content = handle_children(element).trim().to_string();
-    let content = match element.text {
-        Some(ref s) => format!("{}", s),
-        None => String::new(),
-    };
 
     if children_content.is_empty() {
-        format!("{}{}{}", start, group_lines_file(&content), end)
+        let content = match element.text {
+            Some(ref s) => format!("{}", s),
+            None => String::new(),
+        };
+        format!("{}{}{}", start, group_lines(&content), end)
     } else {
-        format!("{}{}{}", start, group_lines_file(&children_content), end)
+        format!("{}{}{}", start, group_lines(&children_content), end)
     }
 }
 
@@ -107,6 +108,10 @@ pub fn convert_file(contents: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn body(content: &str) -> String {
+        format!("<body>{}</body>", content)
+    }
 
     #[test]
     fn convert_par() {
@@ -321,5 +326,23 @@ mod tests {
         let contents = "<body><img href=\"a/b/c/d.png\" /></body>";
         let result = "<img href=\"d.png\" />".to_string();
         assert_eq!(convert_file(contents), result);
+    }
+
+    #[test]
+    fn code() {
+        let contents = body("<code>i</code>");
+        let result = "`i`".to_string();
+        assert_eq!(convert_file(&contents), result);
+    }
+
+    #[test]
+    fn code_multiline() {
+        let contents = body("<code>i = 0;\ni++</code>");
+        let result = "`i = 0; i++`".to_string();
+        assert_eq!(convert_file(&contents), result);
+
+        let contents = body("<code>i = 0;\n\ni++;\n\n\n\nj = i;\n\n\n</code>");
+        let result = "`i = 0; i++; j = i;`".to_string();
+        assert_eq!(convert_file(&contents), result);
     }
 }
