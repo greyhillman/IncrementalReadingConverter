@@ -11,10 +11,19 @@ fn handle(element: &Element) -> String {
         "sub" => handle_text("_{", element, "}"),
         "sup" => handle_text("^{", element, "}"),
         "code" => handle_text("`", element, "`"),
+        "pre" => handle_pre(element),
         "img" => format!("\n{}\n", handle_img(element)),
         "ol" | "ul" | "li" => handle_list(0, element),
         _ => String::new(),
     }
+}
+
+fn handle_pre(element: &Element) -> String {
+    let content = match element.text {
+        Some(ref s) => format!("{}", s),
+        None => String::new(),
+    };
+    format!("```\n{}\n```", &content)
 }
 
 fn handle_list(depth: u8, element: &Element) -> String {
@@ -343,6 +352,13 @@ mod tests {
 
         let contents = body("<code>i = 0;\n\ni++;\n\n\n\nj = i;\n\n\n</code>");
         let result = "`i = 0; i++; j = i;`".to_string();
+        assert_eq!(convert_file(&contents), result);
+    }
+
+    #[test]
+    fn pre() {
+        let contents = body("<pre>int i = 0;\ni++;\n\nint j = i</pre>");
+        let result = "```\nint i = 0;\ni++;\n\nint j = i\n```".to_string();
         assert_eq!(convert_file(&contents), result);
     }
 }
