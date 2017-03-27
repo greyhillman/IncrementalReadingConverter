@@ -19,11 +19,14 @@ fn handle(element: &Element) -> String {
 }
 
 fn handle_pre(element: &Element) -> String {
-    let content = match element.text {
+    let child = element.children.iter().next().expect("No inner tag for pre tag.");
+
+    let content = match child.text {
         Some(ref s) => format!("{}", s),
         None => String::new(),
     };
-    format!("```\n{}\n```", &content)
+    println!("{}", content);
+    format!("```\n{}\n```", content)
 }
 
 fn handle_list(depth: u8, element: &Element) -> String {
@@ -357,7 +360,7 @@ mod tests {
 
     #[test]
     fn pre() {
-        let contents = body("<pre>int i = 0;\ni++;\n\nint j = i</pre>");
+        let contents = body("<pre><text>int i = 0;\ni++;\n\nint j = i</text></pre>");
         let result = "```\nint i = 0;\ni++;\n\nint j = i\n```".to_string();
         assert_eq!(convert_file(&contents), result);
     }
