@@ -4,7 +4,7 @@ pub mod html_to_ir;
 
 pub fn convert_file(debug: bool, file_type: &str, contents: &str) -> String {
     match file_type {
-        "html" => {
+        "html" | "xhtml" => {
             if debug {
                 html_to_ir::convert_file(contents)
             } else {

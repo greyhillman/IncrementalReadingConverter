@@ -81,12 +81,12 @@ fn handle_ol(depth: u8, element: &Element) -> String {
 }
 
 fn handle_img(element: &Element) -> String {
-    let (_, href) = element.attributes.iter()
-        .find(|&(ref k, _)| *k == "href")
+    let (_, src) = element.attributes.iter()
+        .find(|&(ref k, _)| *k == "src")
         .unwrap();
-    let file = href.split("/").last().unwrap();
+    let file = src.split("/").last().unwrap();
 
-    format!("<img href=\"{}\" />", file)
+    format!("<img src=\"{}\" />", file)
 }
 
 fn handle_children(element: &Element) -> String {
