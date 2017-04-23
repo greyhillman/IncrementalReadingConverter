@@ -1,367 +1,296 @@
-extern crate xmltree;
-use self::xmltree::Element;
-
 use group_lines::group_lines;
 
-fn handle(element: &Element) -> String {
-    match element.name.as_str() {
-        "body" => handle_children(element),
-        "p" => format!("\n{}\n", handle_children(element).trim()),
-        "text" => handle_text("", element, ""),
-        "sub" => handle_text("_{", element, "}"),
-        "sup" => handle_text("^{", element, "}"),
-        "code" => handle_text("`", element, "`"),
-        "pre" => handle_pre(element),
-        "img" => format!("\n{}\n", handle_img(element)),
-        "ol" | "ul" | "li" => handle_list(0, element),
-        _ => String::new(),
-    }
+#[derive(Debug, PartialEq)]
+pub enum Text {
+    Text(String),
+    Sub(String),
+    Sup(String),
+    Code(String),
 }
 
-fn handle_pre(element: &Element) -> String {
-    let child = element.children.iter().next().expect("No inner tag for pre tag.");
-
-    let content = match child.text {
-        Some(ref s) => format!("{}", s),
-        None => String::new(),
-    };
-    println!("{}", content);
-    format!("```\n{}\n```", content)
+#[derive(Debug, PartialEq)]
+pub enum ListItem {
+    Item(Vec<Text>),
+    Nested(Vec<Text>, List),
 }
 
-fn handle_list(depth: u8, element: &Element) -> String {
-    match element.name.as_str() {
-        "ol" => format!("{}\n", handle_ol(depth + 1, element).trim()),
-        "ul" => format!("{}\n", handle_ul(depth + 1, element).trim()),
-        "li" => format!("{}", handle_li(depth, element).trim()),
-        _ => handle(element),
-    }
+#[derive(Debug, PartialEq)]
+pub enum List {
+    Ordered(Vec<ListItem>),
+    Unordered(Vec<ListItem>),
 }
 
-fn handle_li(depth: u8, element: &Element) -> String {
-    element.children
-        .iter()
-        .map(|x| handle_list(depth, x))
-        .filter(|x| !x.is_empty())
-        .fold(String::new(), |acc, x| acc + &x + "\n")
+#[derive(Debug, PartialEq)]
+pub enum IR {
+    Img(String),
+    Pre(String),
+    Par(Vec<Text>),
+    List(List),
+    Body(Vec<IR>),
 }
 
-fn get_indent(depth: u8) -> String {
-    fn helper(acc: String, depth: u8) -> String {
-        match depth {
-            0 => acc,
-            1 => helper(acc + "-", depth - 1),
-            _ => helper(acc + "--", depth - 1),
+impl Text {
+    fn handle(self) -> String {
+        use self::Text::*;
+        match self {
+            Sub(text) => format!("_{{{}}}", text),
+            Sup(text) => format!("^{{{}}}", text),
+            Code(code) => format!("`{}`", group_lines(&code)),
+            Text(text) => format!("{}", text),
         }
     }
-    helper(String::new(), depth)
 }
 
-fn handle_ul(depth: u8, element: &Element) -> String {
-    element.children
-        .iter()
-        .map(|x| format!("{} {}", get_indent(depth), handle_list(depth, x)))
-        .fold(String::new(), |acc, x| acc + &x + "\n")
-        .trim()
-        .to_string()
-}
+impl<'a> Text {
+    pub fn as_string(&'a self) -> &'a String {
+        use self::Text::*;
 
-fn handle_ol(depth: u8, element: &Element) -> String {
-    let indent = if depth <= 1 {
-        String::new()
-    } else {
-        get_indent(depth - 1) + "-"
-    };
-
-    element.children.iter()
-        .map(|x| handle_list(depth, x))
-        .zip((1..)) // Used for the numbers
-        .map(|(child, li)| format!("{}{}) {}", indent, li, child))
-        .fold(String::new(), |acc, x| acc + &x + "\n").trim().to_string()
-}
-
-fn handle_img(element: &Element) -> String {
-    let (_, src) = element.attributes.iter()
-        .find(|&(ref k, _)| *k == "src")
-        .unwrap();
-    let file = src.split("/").last().unwrap();
-
-    format!("<img src=\"{}\" />", file)
-}
-
-fn handle_children(element: &Element) -> String {
-    element.children
-        .iter()
-        .map(|x| handle(x))
-        .filter(|x| !x.is_empty())
-        .fold(String::new(), |acc, x| acc + &x)
-}
-
-fn handle_text(start: &str, element: &Element, end: &str) -> String {
-    let children_content = handle_children(element).trim().to_string();
-
-    if children_content.is_empty() {
-        let content = match element.text {
-            Some(ref s) => format!("{}", s),
-            None => String::new(),
-        };
-        format!("{}{}{}", start, group_lines(&content), end)
-    } else {
-        format!("{}{}{}", start, group_lines(&children_content), end)
+        match *self {
+            Text(ref x) => x,
+            Sub(ref x) => x,
+            Sup(ref x) => x,
+            Code(ref x) => x,
+        }
     }
 }
 
-pub fn convert_file(contents: &str) -> String {
-    let contents = Element::parse(contents.as_bytes()).unwrap();
+impl ListItem {
+    fn handle(self, depth: u8) -> String {
+        use self::ListItem::*;
 
-    handle(&contents).trim().to_string()
+        fn handle_texts(texts: Vec<Text>) -> String {
+            texts.into_iter()
+                .map(|x| x.handle())
+                .fold(String::new(), |acc, x| acc + &x)
+        }
+
+        match self {
+            Item(texts) => format!("{}", handle_texts(texts)),
+            Nested(texts, list) => {
+                format!("{}\n{}", handle_texts(texts), list.handle(depth + 1).trim())
+            }
+        }
+    }
+}
+
+impl List {
+    fn get_indent(depth: u8) -> String {
+        fn helper(acc: String, depth: u8) -> String {
+            match depth {
+                0 => acc,
+                1 => helper(acc + "-", depth - 1),
+                _ => helper(acc + "--", depth - 1),
+            }
+        }
+        helper(String::new(), depth)
+    }
+
+    fn handle(self, depth: u8) -> String {
+        use self::List::*;
+
+        match self {
+            Ordered(items) => {
+                items.into_iter()
+                    .map(|x| x.handle(depth))
+                    .zip((1..)) // Used for the numbers
+                    .map(|(item, number)| {
+                        format!("{}{}) {}", List::get_indent(depth - 1), number, item)
+                    })
+                    .fold(String::new(), |acc, x| acc + &x + "\n")
+            }
+            Unordered(items) => {
+                items.into_iter()
+                    .map(|x| format!("{} {}", List::get_indent(depth), x.handle(depth)))
+                    .fold(String::new(), |acc, x| acc + &x + "\n")
+            }
+        }
+    }
+}
+
+impl IR {
+    pub fn handle(self) -> String {
+        use self::IR::*;
+        match self {
+            Img(src) => {
+                format!("<img src=\"{}\" />\n",
+                        src.split("/")
+                            .last()
+                            .expect("Failed to get the filename for an img tag."))
+            }
+            Pre(text) => format!("```\n{}\n```", text),
+            List(list) => format!("{}", list.handle(1)),
+            Body(children) => {
+                children.into_iter()
+                    .map(|x| x.handle())
+                    .fold(String::new(), |acc, x| acc + &x)
+                    .trim()
+                    .to_string()
+            }
+            Par(children) => {
+                let text = children.into_iter()
+                    .map(|x| x.handle())
+                    .collect::<String>()
+                    .trim()
+                    .to_string();
+                format!("{}\n\n", group_lines(&text))
+            }
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn body(content: &str) -> String {
-        format!("<body>{}</body>", content)
-    }
-
     #[test]
     fn convert_par() {
-        let contents = "<body>
-        <p>
-            <text>Test
-            test</text>
-        </p>
-        </body>";
-        assert_eq!(convert_file(contents), String::from("Test test"));
+        let content = IR::Par(vec![Text::Text("Test\ntest".to_string())]);
+        assert_eq!(content.handle(), String::from("Test test\n\n"));
     }
 
     #[test]
     fn convert_par_par() {
-        let contents = "<body>
-        <p><text>Test</text></p>
-        <p><text>Test</text></p>
-        </body>";
+        let content = IR::Body(vec![IR::Par(vec![Text::Text("Test".to_string())]),
+                                    IR::Par(vec![Text::Text("Test".to_string())])]);
         let result = "Test\n\nTest".to_string();
-        assert_eq!(convert_file(contents), result);
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
     fn convert_par_sub() {
-        let contents = "\
-        <body>\
-        <p>
-            <text>Test</text>
-            <sub>2</sub>
-        </p>
-        </body>";
-        let result = String::from("Test_{2}");
-        assert_eq!(convert_file(contents), result);
+        let content = IR::Par(vec![Text::Text("Test".to_string()),
+                                   Text::Sub("2".to_string())]);
+        let result = String::from("Test_{2}\n\n");
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
     fn convert_par_sup() {
-        let contents = "\
-        <body>\
-        <p>
-            <text>Test</text>
-            <sup>2</sup>
-        </p>
-        </body>";
-        let result = String::from("Test^{2}");
-        assert_eq!(convert_file(contents), result);
+        let content = IR::Par(vec![Text::Text("Test".to_string()),
+                                   Text::Sup("2".to_string())]);
+        let result = String::from("Test^{2}\n\n");
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
     fn convert_ul() {
-        let contents = "<body>
-        <ul>
-        <li><text>a</text></li>
-        <li><text>b</text></li>
-        <li><text>c</text></li>
-        </ul>
-        </body>";
-        let result = "- a\n- b\n- c".to_string();
-        assert_eq!(convert_file(contents), result);
+        let content = IR::List(List::Unordered(vec![
+            ListItem::Item(vec![Text::Text("a".to_string())]),
+            ListItem::Item(vec![Text::Text("b".to_string())]),
+            ListItem::Item(vec![Text::Text("c".to_string())])
+        ]));
+        let result = "- a\n- b\n- c\n".to_string();
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
     fn convert_ol() {
-        let contents = "<body>
-        <ol>
-        <li><text>a</text></li>
-        <li><text>b</text></li>
-        <li><text>c</text></li>
-        </ol>
-        </body>";
-        let result = "1) a\n2) b\n3) c".to_string();
-        assert_eq!(convert_file(contents), result);
+        let content = IR::List(List::Ordered(vec![
+            ListItem::Item(vec![Text::Text("a".to_string())]),
+            ListItem::Item(vec![Text::Text("b".to_string())]),
+            ListItem::Item(vec![Text::Text("c".to_string())])
+        ]));
+        let result = "1) a\n2) b\n3) c\n".to_string();
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
     fn convert_nested_ul_ul() {
-        let contents = "<body>
-        <ul>
-        <li><text>a</text></li>
-        <li><text>b</text>
-            <ul>
-                <li><text>b1</text></li>
-                <li><text>b2</text></li>
-            </ul>
-        </li>
-        <li><text>c</text></li>
-        </ul>
-        </body>";
-        let result = "- a\n- b\n--- b1\n--- b2\n- c".to_string();
-        assert_eq!(convert_file(contents), result);
+        let content = IR::List(List::Unordered(vec![
+            ListItem::Item(vec![Text::Text("a".to_string())]),
+            ListItem::Nested(vec![Text::Text("b".to_string())],
+                List::Unordered(vec![
+                    ListItem::Item(vec![Text::Text("b1".to_string())]),
+                    ListItem::Item(vec![Text::Text("b2".to_string())])
+                ])),
+            ListItem::Item(vec![Text::Text("c".to_string())])
+        ]));
+        let result = "- a\n- b\n--- b1\n--- b2\n- c\n".to_string();
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
     fn convert_nested_ol_ul() {
-        let contents = "<body>
-        <ol>
-        <li><text>a</text></li>
-        <li><text>b</text>
-            <ul>
-                <li><text>b1</text></li>
-                <li><text>b2</text></li>
-            </ul>
-        </li>
-        <li><text>c</text></li>
-        </ol>
-        </body>";
-        let result = "1) a\n2) b\n--- b1\n--- b2\n3) c".to_string();
-        assert_eq!(convert_file(contents), result);
+        let content = IR::List(List::Ordered(vec![
+            ListItem::Item(vec![Text::Text("a".to_string())]),
+            ListItem::Nested(vec![Text::Text("b".to_string())],
+                List::Unordered(vec![
+                    ListItem::Item(vec![Text::Text("b1".to_string())]),
+                    ListItem::Item(vec![Text::Text("b2".to_string())])
+                ])),
+            ListItem::Item(vec![Text::Text("c".to_string())])
+        ]));
+        let result = "1) a\n2) b\n--- b1\n--- b2\n3) c\n".to_string();
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
     fn convert_nested_ul_ol() {
-        let contents = "<body>
-        <ul>
-        <li><text>a</text></li>
-        <li><text>b</text>
-            <ol>
-                <li><text>b1</text></li>
-                <li><text>b2</text></li>
-            </ol>
-        </li>
-        <li><text>c</text></li>
-        </ul>
-        </body>";
-        let result = "- a\n- b\n--1) b1\n--2) b2\n- c".to_string();
-        assert_eq!(convert_file(contents), result);
+        let content = IR::List(List::Unordered(vec![
+            ListItem::Item(vec![Text::Text("a".to_string())]),
+            ListItem::Nested(vec![Text::Text("b".to_string())],
+                List::Ordered(vec![
+                    ListItem::Item(vec![Text::Text("b1".to_string())]),
+                    ListItem::Item(vec![Text::Text("b2".to_string())])
+                ])),
+            ListItem::Item(vec![Text::Text("c".to_string())])
+        ]));
+        let result = "- a\n- b\n-1) b1\n-2) b2\n- c\n".to_string();
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
     fn convert_nested_ol_ol() {
-        let contents = "<body>
-        <ol>
-        <li><text>a</text></li>
-        <li><text>b</text>
-            <ol>
-                <li><text>b1</text></li>
-                <li><text>b2</text></li>
-            </ol>
-        </li>
-        <li><text>c</text></li>
-        </ol>
-        </body>";
-        let result = "1) a\n2) b\n--1) b1\n--2) b2\n3) c".to_string();
-        assert_eq!(convert_file(contents), result);
+        let content = IR::List(List::Ordered(vec![
+            ListItem::Item(vec![Text::Text("a".to_string())]),
+            ListItem::Nested(vec![Text::Text("b".to_string())],
+                List::Ordered(vec![
+                    ListItem::Item(vec![Text::Text("b1".to_string())]),
+                    ListItem::Item(vec![Text::Text("b2".to_string())])
+                ])),
+            ListItem::Item(vec![Text::Text("c".to_string())])
+        ]));
+        let result = "1) a\n2) b\n-1) b1\n-2) b2\n3) c\n".to_string();
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
-    fn convert_par_ul() {
-        let contents = "<body>
-        <p><text>List:</text></p>
-        <ul>
-        <li><text>a</text></li>
-        <li><text>b</text></li>
-        <li><text>c</text></li>
-        </ul>
-        </body>";
-        let result = "List:\n- a\n- b\n- c".to_string();
-        assert_eq!(convert_file(contents), result);
-    }
-
-    #[test]
-    fn convert_par_ol() {
-        let contents = "<body>
-        <p><text>List:</text></p>
-        <ol>
-        <li><text>a</text></li>
-        <li><text>b</text></li>
-        <li><text>c</text></li>
-        </ol>
-        </body>";
-        let result = "List:\n1) a\n2) b\n3) c".to_string();
-        assert_eq!(convert_file(contents), result);
-    }
-
-    #[test]
-    fn convert_ul_par() {
-        let contents = "<body>
-        <ul>
-        <li><text>a</text></li>
-        <li><text>b</text></li>
-        <li><text>c</text></li>
-        </ul>
-        <p><text>List</text></p>
-        </body>";
-        let result = "- a\n- b\n- c\n\nList".to_string();
-        assert_eq!(convert_file(contents), result);
-    }
-
-    #[test]
-    fn convert_ol_par() {
-        let contents = "<body>
-        <ol>
-        <li><text>a</text></li>
-        <li><text>b</text></li>
-        <li><text>c</text></li>
-        </ol>
-        <p><text>List</text></p>
-        </body>";
-        let result = "1) a\n2) b\n3) c\n\nList".to_string();
-        assert_eq!(convert_file(contents), result);
-    }
-
-    #[test]
-    fn text_in_sup() {
-        let contents = "<body><sup><text>a</text></sup></body>";
-        let result = "^{a}".to_string();
-        assert_eq!(convert_file(contents), result);
-    }
-
-    #[test]
-    fn shorten_img_href() {
-        let contents = "<body><img href=\"a/b/c/d.png\" /></body>";
-        let result = "<img href=\"d.png\" />".to_string();
-        assert_eq!(convert_file(contents), result);
+    fn shorten_img_src() {
+        let content = IR::Img("a/b/c/d.png".to_string());
+        let result = "<img src=\"d.png\" />".to_string();
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
     fn code() {
-        let contents = body("<code>i</code>");
+        let content = Text::Code("i".to_string());
         let result = "`i`".to_string();
-        assert_eq!(convert_file(&contents), result);
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
     fn code_multiline() {
-        let contents = body("<code>i = 0;\ni++</code>");
+        let content = Text::Code("i = 0;\ni++".to_string());
         let result = "`i = 0; i++`".to_string();
-        assert_eq!(convert_file(&contents), result);
+        assert_eq!(content.handle(), result);
 
-        let contents = body("<code>i = 0;\n\ni++;\n\n\n\nj = i;\n\n\n</code>");
+        let content = Text::Code("i = 0;\n\ni++;\n\n\n\nj = i;\n\n\n".to_string());
         let result = "`i = 0; i++; j = i;`".to_string();
-        assert_eq!(convert_file(&contents), result);
+        assert_eq!(content.handle(), result);
     }
 
     #[test]
     fn pre() {
-        let contents = body("<pre><text>int i = 0;\ni++;\n\nint j = i</text></pre>");
+        let content = IR::Pre("int i = 0;\ni++;\n\nint j = i".to_string());
         let result = "```\nint i = 0;\ni++;\n\nint j = i\n```".to_string();
-        assert_eq!(convert_file(&contents), result);
+        assert_eq!(content.handle(), result);
+    }
+
+    #[test]
+    fn par_text_text() {
+        let content = IR::Par(vec![Text::Text("a ".to_string()),
+                                   Text::Text("b".to_string())]);
+        let result = "a b\n\n".to_string();
+        assert_eq!(content.handle(), result);
     }
 }
