@@ -159,7 +159,7 @@ impl HTMLNode {
                      }]
             }
             x if children.is_empty() => {
-                println!("No children for: {}", x);
+                //println!("No children for: {}", x);
                 vec![]
             }
             "span" | "a" | "i" | "b" | "em" | "strong" | "h1" | "h2" | "h3" | "h4" |
@@ -199,7 +199,7 @@ impl HTMLNode {
                     .flat_map(|child| child.optimize())
                     .collect::<Vec<HTMLNode>>();
 
-                println!("{}", x);
+                //println!("{}", x);
                 vec![HTMLNode::Node {
                          tag: x.to_string(),
                          attributes: attributes,
@@ -231,6 +231,7 @@ impl HTMLNode {
                     "code" => ir_to_anki::Text::Code(content),
                     "sub" => ir_to_anki::Text::Sub(content),
                     "sup" => ir_to_anki::Text::Sup(content),
+                    "td" | "th" => ir_to_anki::Text::Text(content),
                     x => {
                         println!("ERROR: converting {} to text ir", x);
 
@@ -239,6 +240,66 @@ impl HTMLNode {
                 }
             }
         }
+    }
+
+    fn convert_table(children: Vec<HTMLNode>) -> ir_to_anki::Table {
+        fn convert_rows(rows: Vec<HTMLNode>) -> Vec<ir_to_anki::TableRow> {
+            let rows = rows.into_iter()
+                .filter(|row| {
+                    match *row {
+                        HTMLNode::Node { ref tag, .. } => tag == "tr",
+                        _ => false,
+                    }
+                })
+                .map(|row| {
+                    match row {
+                        HTMLNode::Node { children, .. } => children,
+                        _ => vec![],
+                    }
+                })
+                .collect::<Vec<Vec<HTMLNode>>>();
+            println!("{:#?}", rows);
+            let rows = rows.into_iter()
+                .map(|cols| {
+                    cols.into_iter()
+                        .map(|col| vec![col.convert_to_text_ir()])
+                        .collect::<Vec<Vec<ir_to_anki::Text>>>()
+                })
+                .map(|cols| ir_to_anki::TableRow::new(cols))
+                .collect::<Vec<ir_to_anki::TableRow>>();
+
+            println!("{:#?}", rows);
+            rows
+        }
+        let mut header = None;
+        let mut body = vec![];
+        let mut footer = None;
+
+        for child in children {
+            match child {
+                HTMLNode::Text(x) => continue,
+                HTMLNode::Node { tag, mut children, .. } => {
+                    match tag.as_str() {
+                        "thead" => {
+                            println!("{:#?}", children);
+                            header = match children.pop() {
+                                Some(x) => Some(convert_rows(vec![x]).pop().expect("xd")),
+                                None => None,
+                            };
+                        }
+                        "tfoot" => {
+                            footer = None;
+                        }
+                        "tbody" => {
+                            body.append(&mut convert_rows(children));
+                        }
+                        _ => (),
+                    }
+                }
+            }
+        }
+
+        ir_to_anki::Table::new(header, body, footer)
     }
 
     fn convert_node(tag: String,
@@ -260,7 +321,7 @@ impl HTMLNode {
                 IR::Par(children)
             }
             "pre" => {
-                let content = match *children.first().unwrap() {
+                let content = match *children.first().expect("pre xd") {
                     HTMLNode::Text(ref x) => x.clone(),
                     HTMLNode::Node { .. } => panic!(),
                 };
@@ -269,13 +330,7 @@ impl HTMLNode {
             }
             "ul" => IR::List(ir_to_anki::List::Unordered(vec![])),
             "ol" => IR::List(ir_to_anki::List::Ordered(vec![])),
-            "table" => {
-                let content = children.into_iter()
-                    .map(|child| child.to_string())
-                    .collect::<String>();
-
-                IR::Pre(format!("<table>{}</table>", content))
-            }
+            "table" => IR::Table(HTMLNode::convert_table(children)),
             x => panic!("{}", x),
         }
     }
@@ -364,13 +419,14 @@ pub fn convert_file(contents: &str) -> ir_to_anki::IRBody {
 
     let document = convert_dom(&dom.document);
 
+    document.print_tags();
     let doc = document.optimize();
-    println!("Optimized: {:#?}", doc);
+    //println!("Optimized: {:#?}", doc);
     doc.print_tags();
 
     let doc = doc.convert();
 
-    println!("{:#?}", doc);
+    //println!("{:#?}", doc);
 
     doc
 }

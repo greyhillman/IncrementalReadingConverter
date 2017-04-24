@@ -61,7 +61,7 @@ impl IRBody {
 }
 
 impl TableRow {
-    fn new(cols: Vec<Vec<Text>>) -> TableRow {
+    pub fn new(cols: Vec<Vec<Text>>) -> TableRow {
         TableRow { columns: cols }
     }
 
@@ -80,7 +80,7 @@ impl TableRow {
 }
 
 impl Table {
-    fn new(header: Option<TableRow>,
+    pub fn new(header: Option<TableRow>,
            body: Vec<TableRow>,
            footer: Option<TableRow>)
            -> Table {
