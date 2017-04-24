@@ -1,5 +1,8 @@
 use group_lines::group_lines;
 
+extern crate itertools;
+use self::itertools::join;
+
 #[derive(Debug, PartialEq)]
 pub enum Text {
     Text(String),
@@ -21,12 +24,96 @@ pub enum List {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct TableRow {
+    columns: Vec<Vec<Text>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Table {
+    header: Option<TableRow>,
+    body: Vec<TableRow>,
+    footer: Option<TableRow>,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum IR {
     Img(String),
     Pre(String),
     Par(Vec<Text>),
     List(List),
-    Body(Vec<IR>),
+    Table(Table),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct IRBody {
+    pub children: Vec<IR>,
+}
+
+impl IRBody {
+    pub fn handle(self) -> String {
+        self.children
+            .into_iter()
+            .map(|c| c.handle())
+            .collect::<String>()
+            .trim()
+            .to_string()
+    }
+}
+
+impl TableRow {
+    fn new(cols: Vec<Vec<Text>>) -> TableRow {
+        TableRow { columns: cols }
+    }
+
+    fn handle(self) -> String {
+        let columns = self.columns
+            .into_iter()
+            .map(|cell| {
+                cell.into_iter()
+                    .map(|x| x.handle())
+                    .collect::<String>()
+                    .trim()
+                    .to_string()
+            });
+        join(columns, " | ")
+    }
+}
+
+impl Table {
+    fn new(header: Option<TableRow>,
+           body: Vec<TableRow>,
+           footer: Option<TableRow>)
+           -> Table {
+        Table {
+            header: header,
+            body: body,
+            footer: footer,
+        }
+    }
+
+    fn handle(self) -> String {
+        fn helper(rows: Vec<TableRow>) -> String {
+            let rows = rows.into_iter()
+                .map(|row| row.handle());
+
+            join(rows, "\n")
+        }
+        let dividing_line = "----------";
+
+        let header = match self.header {
+            Some(x) => format!("{}\n{}\n", x.handle(), dividing_line),
+            None => format!(""),
+        };
+
+        let body = helper(self.body);
+
+        let footer = match self.footer {
+            Some(x) => format!("\n{}\n{}", dividing_line, x.handle()),
+            None => format!(""),
+        };
+
+        format!("{}{}{}\n\n", header, body, footer)
+    }
 }
 
 impl Text {
@@ -117,15 +204,8 @@ impl IR {
                             .last()
                             .expect("Failed to get the filename for an img tag."))
             }
-            Pre(text) => format!("```\n{}\n```", text),
+            Pre(text) => format!("```\n{}\n```\n", text),
             List(list) => format!("{}", list.handle(1)),
-            Body(children) => {
-                children.into_iter()
-                    .map(|x| x.handle())
-                    .fold(String::new(), |acc, x| acc + &x)
-                    .trim()
-                    .to_string()
-            }
             Par(children) => {
                 let text = children.into_iter()
                     .map(|x| x.handle())
@@ -134,6 +214,7 @@ impl IR {
                     .to_string();
                 format!("{}\n\n", group_lines(&text))
             }
+            Table(table) => table.handle(),
         }
     }
 }
@@ -143,21 +224,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn convert_par() {
+    fn par() {
         let content = IR::Par(vec![Text::Text("Test\ntest".to_string())]);
         assert_eq!(content.handle(), String::from("Test test\n\n"));
     }
 
     #[test]
-    fn convert_par_par() {
-        let content = IR::Body(vec![IR::Par(vec![Text::Text("Test".to_string())]),
-                                    IR::Par(vec![Text::Text("Test".to_string())])]);
+    fn par_par() {
+        let content = vec![IR::Par(vec![Text::Text("Test".to_string())]),
+                           IR::Par(vec![Text::Text("Test".to_string())])];
+        let content = IRBody { children: content };
         let result = "Test\n\nTest".to_string();
         assert_eq!(content.handle(), result);
     }
 
     #[test]
-    fn convert_par_sub() {
+    fn par_sub() {
         let content = IR::Par(vec![Text::Text("Test".to_string()),
                                    Text::Sub("2".to_string())]);
         let result = String::from("Test_{2}\n\n");
@@ -165,7 +247,7 @@ mod tests {
     }
 
     #[test]
-    fn convert_par_sup() {
+    fn par_sup() {
         let content = IR::Par(vec![Text::Text("Test".to_string()),
                                    Text::Sup("2".to_string())]);
         let result = String::from("Test^{2}\n\n");
@@ -173,7 +255,7 @@ mod tests {
     }
 
     #[test]
-    fn convert_ul() {
+    fn ul() {
         let content = IR::List(List::Unordered(vec![
             ListItem::Item(vec![Text::Text("a".to_string())]),
             ListItem::Item(vec![Text::Text("b".to_string())]),
@@ -184,7 +266,7 @@ mod tests {
     }
 
     #[test]
-    fn convert_ol() {
+    fn ol() {
         let content = IR::List(List::Ordered(vec![
             ListItem::Item(vec![Text::Text("a".to_string())]),
             ListItem::Item(vec![Text::Text("b".to_string())]),
@@ -195,7 +277,7 @@ mod tests {
     }
 
     #[test]
-    fn convert_nested_ul_ul() {
+    fn nested_ul_ul() {
         let content = IR::List(List::Unordered(vec![
             ListItem::Item(vec![Text::Text("a".to_string())]),
             ListItem::Nested(vec![Text::Text("b".to_string())],
@@ -210,7 +292,7 @@ mod tests {
     }
 
     #[test]
-    fn convert_nested_ol_ul() {
+    fn nested_ol_ul() {
         let content = IR::List(List::Ordered(vec![
             ListItem::Item(vec![Text::Text("a".to_string())]),
             ListItem::Nested(vec![Text::Text("b".to_string())],
@@ -225,7 +307,7 @@ mod tests {
     }
 
     #[test]
-    fn convert_nested_ul_ol() {
+    fn nested_ul_ol() {
         let content = IR::List(List::Unordered(vec![
             ListItem::Item(vec![Text::Text("a".to_string())]),
             ListItem::Nested(vec![Text::Text("b".to_string())],
@@ -240,7 +322,7 @@ mod tests {
     }
 
     #[test]
-    fn convert_nested_ol_ol() {
+    fn nested_ol_ol() {
         let content = IR::List(List::Ordered(vec![
             ListItem::Item(vec![Text::Text("a".to_string())]),
             ListItem::Nested(vec![Text::Text("b".to_string())],
@@ -257,7 +339,7 @@ mod tests {
     #[test]
     fn shorten_img_src() {
         let content = IR::Img("a/b/c/d.png".to_string());
-        let result = "<img src=\"d.png\" />".to_string();
+        let result = "<img src=\"d.png\" />\n".to_string();
         assert_eq!(content.handle(), result);
     }
 
@@ -281,8 +363,9 @@ mod tests {
 
     #[test]
     fn pre() {
-        let content = IR::Pre("int i = 0;\ni++;\n\nint j = i".to_string());
-        let result = "```\nint i = 0;\ni++;\n\nint j = i\n```".to_string();
+        let code = "int i = 0;\ni++;\n\nint j = i".to_string();
+        let content = IR::Pre(code.clone());
+        let result = format!("```\n{}\n```\n", code);
         assert_eq!(content.handle(), result);
     }
 
@@ -291,6 +374,79 @@ mod tests {
         let content = IR::Par(vec![Text::Text("a ".to_string()),
                                    Text::Text("b".to_string())]);
         let result = "a b\n\n".to_string();
+        assert_eq!(content.handle(), result);
+    }
+
+    #[test]
+    fn table() {
+        let header = Some(TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                             vec![Text::Text("b".to_string())]]));
+        let body = vec![TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                           vec![Text::Text("b".to_string())]]),
+                        TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                           vec![Text::Text("b".to_string())]])];
+        let footer = Some(TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                             vec![Text::Text("b".to_string())]]));
+        let content = IR::Table(Table::new(header, body, footer));
+        let hr = "----------";
+        let result =
+            format!("\
+        a | b\n{}\na | b\na | b\n{}\na | b\n\n",
+                    hr,
+                    hr);
+        let content = content.handle();
+        println!("\n{}", content);
+        assert_eq!(content, result);
+    }
+
+    #[test]
+    fn table_no_header() {
+        let header = None;
+        let body = vec![TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                           vec![Text::Text("b".to_string())]]),
+                        TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                           vec![Text::Text("b".to_string())]])];
+        let footer = Some(TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                             vec![Text::Text("b".to_string())]]));
+        let content = IR::Table(Table::new(header, body, footer));
+        let hr = "----------";
+        let result =
+            format!("\
+        a | b\na | b\n{}\na | b\n\n",
+                    hr);
+        assert_eq!(content.handle(), result);
+    }
+
+    #[test]
+    fn table_no_footer() {
+        let header = Some(TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                             vec![Text::Text("b".to_string())]]));
+        let body = vec![TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                           vec![Text::Text("b".to_string())]]),
+                        TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                           vec![Text::Text("b".to_string())]])];
+        let footer = None;
+        let content = IR::Table(Table::new(header, body, footer));
+        let hr = "----------";
+        let result =
+            format!("\
+        a | b\n{}\na | b\na | b\n\n",
+                    hr);
+        assert_eq!(content.handle(), result);
+    }
+
+    #[test]
+    fn table_no_header_and_footer() {
+        let header = None;
+        let body = vec![TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                           vec![Text::Text("b".to_string())]]),
+                        TableRow::new(vec![vec![Text::Text("a".to_string())],
+                                           vec![Text::Text("b".to_string())]])];
+        let footer = None;
+        let content = IR::Table(Table::new(header, body, footer));
+        let result = format!("\
+        a | b\n\
+        a | b\n\n");
         assert_eq!(content.handle(), result);
     }
 }

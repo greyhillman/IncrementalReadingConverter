@@ -8,6 +8,7 @@ clap = "2.20.3"
 xmltree = "0.3"
 html5ever = "0.14.1"
 regex = "*"
+itertools = "0.6.0"
 
 [lib]
 name = "anki_convert"

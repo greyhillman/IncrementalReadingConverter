@@ -19,13 +19,13 @@ struct Document {
 }
 
 impl Document {
-    fn convert(self) -> IR {
+    fn convert(self) -> ir_to_anki::IRBody {
         let children = self.children
             .into_iter()
             .map(|child| child.convert())
             .collect();
 
-        IR::Body(children)
+        ir_to_anki::IRBody { children: children }
     }
 
     fn optimize(self) -> Document {
@@ -351,7 +351,7 @@ fn convert_dom(handle: &Handle) -> Document {
     }
 }
 
-pub fn convert_file(contents: &str) -> IR {
+pub fn convert_file(contents: &str) -> ir_to_anki::IRBody {
     fn fix_non_enclosing_tags(contents: &str) -> String {
         Regex::new(r"<img((.|\n)*?)/{0}>")
             .unwrap()
@@ -380,68 +380,73 @@ mod tests {
     use super::convert_file;
     use ir_to_anki::IR;
     use ir_to_anki::Text;
+    use ir_to_anki;
 
     fn body(text: &str) -> String {
         format!("<body>{}</body>", text)
     }
 
+    fn ir_body(children: Vec<IR>) -> ir_to_anki::IRBody {
+        ir_to_anki::IRBody { children: children }
+    }
+
     #[test]
     fn p() {
         let content = body("<p>Test</p>");
-        let result = IR::Body(vec![IR::Par(vec![Text::Text("Test".to_string())])]);
+        let result = ir_body(vec![IR::Par(vec![Text::Text("Test".to_string())])]);
         assert_eq!(convert_file(&content), result);
     }
 
     #[test]
     fn p_text_a_text() {
         let content = body("<p>Test <a>a</a> to b</p>");
-        let result = IR::Body(vec![IR::Par(vec![Text::Text("Test ".to_string()),
-                                                Text::Text("a".to_string()),
-                                                Text::Text(" to b".to_string())])]);
+        let result = ir_body(vec![IR::Par(vec![Text::Text("Test ".to_string()),
+                                               Text::Text("a".to_string()),
+                                               Text::Text(" to b".to_string())])]);
         assert_eq!(convert_file(&content), result);
     }
 
     #[test]
     fn img_p() {
         let content = body("<div><img src=\"test.png\" /><p>Caption</p></div>");
-        let result = IR::Body(vec![IR::Img("test.png".to_string()),
-                                   IR::Par(vec![Text::Text("Caption".to_string())])]);
+        let result = ir_body(vec![IR::Img("test.png".to_string()),
+                                  IR::Par(vec![Text::Text("Caption".to_string())])]);
         assert_eq!(convert_file(&content), result);
     }
 
     #[test]
     fn img_text() {
         let content = body("<div><img src=\"test.png\" />Caption</div>");
-        let result = IR::Body(vec![IR::Img("test.png".to_string()),
-                                   IR::Par(vec![Text::Text("Caption".to_string())])]);
+        let result = ir_body(vec![IR::Img("test.png".to_string()),
+                                  IR::Par(vec![Text::Text("Caption".to_string())])]);
         assert_eq!(convert_file(&content), result);
     }
 
     #[test]
     fn div_with_text() {
         let content = body("<div>text test</div>");
-        let result = IR::Body(vec![IR::Par(vec![Text::Text("text test".to_string())])]);
+        let result = ir_body(vec![IR::Par(vec![Text::Text("text test".to_string())])]);
         assert_eq!(convert_file(&content), result);
     }
 
     #[test]
     fn sup() {
         let content = body("<p><sup>a</sup></p>");
-        let result = IR::Body(vec![IR::Par(vec![Text::Sup("a".to_string())])]);
+        let result = ir_body(vec![IR::Par(vec![Text::Sup("a".to_string())])]);
         assert_eq!(convert_file(&content), result);
     }
 
     #[test]
     fn text_text() {
         let content = body("<p>a b</p>");
-        let result = IR::Body(vec![IR::Par(vec![Text::Text("a b".to_string())])]);
+        let result = ir_body(vec![IR::Par(vec![Text::Text("a b".to_string())])]);
         assert_eq!(convert_file(&content), result);
     }
 
     #[test]
     fn pre_with_tags() {
         let content = body("<pre><h1>Example</h1></pre>");
-        let result = IR::Body(vec![IR::Pre("<h1>Example</h1>".to_string())]);
+        let result = ir_body(vec![IR::Pre("<h1>Example</h1>".to_string())]);
         assert_eq!(convert_file(&content), result);
     }
 }
