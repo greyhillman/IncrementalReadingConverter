@@ -89,6 +89,34 @@ impl List {
             items: vec![],
         }
     }
+
+    pub fn ordered(self) -> Self {
+        List {
+            is_ordered: true,
+            .. self
+        }
+    }
+
+    pub fn unordered(self) -> Self {
+        List {
+            is_ordered: false,
+            .. self
+        }
+    }
+
+    pub fn is_ordered(&self) -> bool {
+        self.is_ordered
+    }
+
+    pub fn add(self, item: ListItem) -> Self {
+        let mut items = self.items;
+        items.push(item);
+
+        List {
+            items: items,
+            .. self
+        }
+    }
 }
 
 impl IntoIterator for List {
@@ -107,6 +135,10 @@ impl TableCell {
     pub fn new(text: TextBlock) -> Self {
         TableCell(text)
     }
+
+    pub fn text(self) -> TextBlock {
+        self.0
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -119,6 +151,25 @@ impl TableRow {
         TableRow {
             columns: vec![],
         }
+    }
+
+    pub fn add(self, cell: TableCell) -> Self {
+        let mut columns = self.columns;
+        columns.push(cell);
+
+        TableRow {
+            columns: columns,
+            .. self
+        }
+    }
+}
+
+impl IntoIterator for TableRow {
+    type Item = TableCell;
+    type IntoIter = ::std::vec::IntoIter<TableCell>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.columns.into_iter()
     }
 }
 
@@ -138,14 +189,14 @@ impl Table {
         }
     }
 
-    pub fn header(self, header: TableRow) -> Self {
+    pub fn set_header(self, header: TableRow) -> Self {
         Table {
             header: Some(header),
             .. self
         }
     }
 
-    pub fn footer(self, footer: TableRow) -> Self {
+    pub fn set_footer(self, footer: TableRow) -> Self {
         Table {
             footer: Some(footer),
             .. self
@@ -160,6 +211,18 @@ impl Table {
             body: body,
             .. self
         }
+    }
+
+    pub fn header(&mut self) -> Option<TableRow> {
+        self.header.take()
+    }
+
+    pub fn footer(&mut self) -> Option<TableRow> {
+        self.footer.take()
+    }
+
+    pub fn body(self) -> Vec<TableRow> {
+        self.body
     }
 }
 
