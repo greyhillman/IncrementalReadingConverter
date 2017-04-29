@@ -2,15 +2,9 @@ extern crate html5ever;
 extern crate xmltree;
 extern crate itertools;
 
-use self::html5ever::parse_document;
-use self::html5ever::rcdom::{RcDom, Handle};
-use self::html5ever::tendril::TendrilSink;
-
-use self::itertools::join;
+use self::html5ever::rcdom::Handle;
 
 use std::iter::FromIterator;
-
-use ir;
 
 #[derive(Debug)]
 pub struct Document {

@@ -1,11 +1,5 @@
-extern crate itertools;
-
-use self::itertools::join;
-
 use html_to_ir::optnodes::OptNodes;
 use html_to_ir::html;
-
-use ir;
 
 #[derive(Debug)]
 pub enum Tag {
