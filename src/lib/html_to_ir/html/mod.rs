@@ -29,9 +29,3 @@ pub fn convert_dom(handle: &Handle) -> Result<Document, &'static str> {
         _ => Err("Converting from non-Document node"),
     }
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn nothing() {}
-}

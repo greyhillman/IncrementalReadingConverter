@@ -9,9 +9,7 @@ pub struct Nodes {
 
 impl Nodes {
     pub fn new() -> Self {
-        Nodes {
-            nodes: vec![],
-        }
+        Nodes { nodes: vec![] }
     }
 
     pub fn add(self, node: Node) -> Self {
@@ -37,14 +35,12 @@ impl Nodes {
             }
         }
 
-        Nodes {
-            nodes
-        }
+        Nodes { nodes: nodes }
     }
 }
 
 impl FromIterator<Node> for Nodes {
-    fn from_iter<I: IntoIterator<Item=Node>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = Node>>(iter: I) -> Self {
         iter.into_iter()
             .fold(Nodes::new(), |nodes, node| nodes.add(node))
     }

@@ -14,7 +14,7 @@ pub enum Node {
     },
 }
 
-impl <'a> From<&'a Handle> for Node {
+impl<'a> From<&'a Handle> for Node {
     fn from(handle: &Handle) -> Self {
         let node = handle.borrow();
 
@@ -37,14 +37,12 @@ impl <'a> From<&'a Handle> for Node {
                     .collect();
 
                 Node::Element {
-                    tag,
-                    attributes,
-                    children
+                    tag: tag,
+                    attributes: attributes,
+                    children: children,
                 }
             }
-            NodeEnum::Text(ref text) => {
-                Node::Text(text.as_ref().to_string())
-            }
+            NodeEnum::Text(ref text) => Node::Text(text.as_ref().to_string()),
             _ => Node::Text(String::new()),
         }
     }
