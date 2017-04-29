@@ -19,15 +19,11 @@ pub struct Document {
 
 impl Document {
     pub fn new() -> Self {
-        Document {
-            children: Nodes::new()
-        }
+        Document { children: Nodes::new() }
     }
 
     pub fn add(self, child: Node) -> Self {
-        Document {
-            children: self.children.add(child)
-        }
+        Document { children: self.children.add(child) }
     }
 }
 
@@ -46,9 +42,7 @@ impl Nodes {
 
         match (nodes.pop(), node) {
             (None, Node::Text(ref x)) if x.is_empty() => (),
-            (None, x) => {
-                nodes.push(x)
-            }
+            (None, x) => nodes.push(x),
             (Some(x), Node::Text(y)) => {
                 if y.is_empty() {
                     nodes.push(x);
@@ -57,23 +51,19 @@ impl Nodes {
                     nodes.push(Node::Text(y))
                 }
             }
-            (Some(Node::Text(x)), Node::Text(y)) => {
-                nodes.push(Node::Text(x + &y))
-            }
+            (Some(Node::Text(x)), Node::Text(y)) => nodes.push(Node::Text(x + &y)),
             (Some(x), y) => {
                 nodes.push(x);
                 nodes.push(y);
             }
         }
 
-        Nodes {
-            nodes: nodes
-        }
+        Nodes { nodes: nodes }
     }
 }
 
 impl FromIterator<Node> for Nodes {
-    fn from_iter<I: IntoIterator<Item=Node>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = Node>>(iter: I) -> Self {
         iter.into_iter()
             .fold(Nodes::new(), |nodes, node| nodes.add(node))
     }
@@ -148,6 +138,5 @@ pub fn convert_dom(handle: &Handle) -> Result<Document, &'static str> {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn nothing() {
-    }
+    fn nothing() {}
 }

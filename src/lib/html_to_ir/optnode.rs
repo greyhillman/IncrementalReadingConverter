@@ -33,7 +33,7 @@ pub enum OptNode {
     Code(String),
     Pre(String),
     Node(Tag, OptNodes),
-    Nothing
+    Nothing,
 }
 
 impl OptNode {
@@ -64,12 +64,8 @@ impl From<html::Node> for OptNode {
             html::Node::Element { tag, attributes, children } => {
                 match tag.as_str() {
                     "img" => OptNode::Node(Tag::Img, OptNodes::new()),
-                    "pre" => {
-                        OptNode::Pre(to_code_string_children(children))
-                    }
-                    "code" => {
-                        OptNode::Code(to_code_string_children(children))
-                    }
+                    "pre" => OptNode::Pre(to_code_string_children(children)),
+                    "code" => OptNode::Code(to_code_string_children(children)),
                     "sub" => OptNode::Node(Tag::Sub, OptNodes::from(children)),
                     "sup" => OptNode::Node(Tag::Sup, OptNodes::from(children)),
                     "li" => OptNode::Node(Tag::LI, OptNodes::from(children)),
@@ -84,4 +80,3 @@ impl From<html::Node> for OptNode {
         }
     }
 }
-

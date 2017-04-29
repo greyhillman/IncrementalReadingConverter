@@ -10,9 +10,7 @@ pub struct OptNodes {
 
 impl OptNodes {
     pub fn new() -> Self {
-        OptNodes {
-            nodes: vec![],
-        }
+        OptNodes { nodes: vec![] }
     }
 
     pub fn add(self, node: optnode::OptNode) -> Self {
@@ -38,7 +36,7 @@ impl IntoIterator for OptNodes {
 }
 
 impl FromIterator<optnode::OptNode> for OptNodes {
-    fn from_iter<I: IntoIterator<Item=optnode::OptNode>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = optnode::OptNode>>(iter: I) -> Self {
         iter.into_iter()
             .fold(OptNodes::new(), |nodes, node| nodes.add(node))
     }
@@ -56,7 +54,5 @@ impl FromIterator<optnode::OptNode> for OptNodes {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn nothing() {
-    }
+    fn nothing() {}
 }
-

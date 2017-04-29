@@ -36,6 +36,5 @@ pub fn convert_file(contents: &str) -> ir::Document {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn nothing() {
-    }
+    fn nothing() {}
 }

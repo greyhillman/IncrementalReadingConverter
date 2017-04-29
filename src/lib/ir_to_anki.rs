@@ -241,10 +241,9 @@ mod tests {
             .set_header(header)
             .add(row)
             .set_footer(footer));
-        let result =
-            "\
+        let result = "\
                       a | b\n-----\na | b\n-----\na | b\n\n"
-                .to_string();
+            .to_string();
         assert_eq!(convert_ir(table), result);
     }
 }
