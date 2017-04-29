@@ -16,6 +16,10 @@ pub fn convert_file(debug: bool, file_type: &str, contents: &str) -> String {
     }
 
     match file_type {
+        "html" | "xhtml" => {
+            let doc = html_to_ir::convert_file(contents);
+            ir_to_anki::convert(doc)
+        }
         _ => panic!("Filetype not supported."),
     }
 }

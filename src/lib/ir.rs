@@ -77,45 +77,34 @@ impl ListItem {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum ListType {
+    Ordered,
+    Unordered,
+}
+
+#[derive(Debug, PartialEq)]
 pub struct List {
-    is_ordered: bool,
+    style: ListType,
     items: Vec<ListItem>,
 }
 
 impl List {
-    pub fn new() -> Self {
+    pub fn new(style: ListType) -> Self {
         List {
-            is_ordered: false,
+            style: style,
             items: vec![],
         }
     }
 
-    pub fn ordered(self) -> Self {
-        List {
-            is_ordered: true,
-            .. self
-        }
-    }
-
-    pub fn unordered(self) -> Self {
-        List {
-            is_ordered: false,
-            .. self
-        }
-    }
-
-    pub fn is_ordered(&self) -> bool {
-        self.is_ordered
+    pub fn style(&self) -> &ListType {
+        &self.style
     }
 
     pub fn add(self, item: ListItem) -> Self {
         let mut items = self.items;
         items.push(item);
 
-        List {
-            items: items,
-            .. self
-        }
+        List { items: items, ..self }
     }
 }
 
@@ -148,19 +137,14 @@ pub struct TableRow {
 
 impl TableRow {
     pub fn new() -> Self {
-        TableRow {
-            columns: vec![],
-        }
+        TableRow { columns: vec![] }
     }
 
     pub fn add(self, cell: TableCell) -> Self {
         let mut columns = self.columns;
         columns.push(cell);
 
-        TableRow {
-            columns: columns,
-            .. self
-        }
+        TableRow { columns: columns, ..self }
     }
 }
 
@@ -190,27 +174,18 @@ impl Table {
     }
 
     pub fn set_header(self, header: TableRow) -> Self {
-        Table {
-            header: Some(header),
-            .. self
-        }
+        Table { header: Some(header), ..self }
     }
 
     pub fn set_footer(self, footer: TableRow) -> Self {
-        Table {
-            footer: Some(footer),
-            .. self
-        }
+        Table { footer: Some(footer), ..self }
     }
 
     pub fn add(self, row: TableRow) -> Self {
         let mut body = self.body;
         body.push(row);
 
-        Table {
-            body: body,
-            .. self
-        }
+        Table { body: body, ..self }
     }
 
     pub fn header(&mut self) -> Option<TableRow> {
@@ -257,24 +232,21 @@ impl IR {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Document {
     children: Vec<IR>,
 }
 
 impl Document {
     pub fn new() -> Self {
-        Document {
-            children: vec![],
-        }
+        Document { children: vec![] }
     }
 
     pub fn add(self, item: IR) -> Self {
         let mut children = self.children;
         children.push(item);
 
-        Document {
-            children: children
-        }
+        Document { children: children }
     }
 }
 
@@ -296,8 +268,7 @@ mod tests {
         let block = TextBlock::new()
             .add(Text::text("a "))
             .add(Text::text("b"));
-        let result = TextBlock::new()
-            .add(Text::text("a b"));
+        let result = TextBlock::new().add(Text::text("a b"));
         assert_eq!(block, result);
     }
 
@@ -316,4 +287,3 @@ mod tests {
         assert_eq!(block, result);
     }
 }
-
