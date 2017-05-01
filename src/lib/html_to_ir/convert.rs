@@ -49,12 +49,23 @@ pub fn convert_textblock(nodes: Nodes) -> ir::TextBlock {
         .map(|node| {
             match node {
                 Node::Text(x) => ir::Text::text(&x),
-                Node::Element { tag, children, .. } => {
+                Node::Element { tag, mut children, .. } => {
                     match tag.as_str() {
                         "sup" => ir::Text::Sup(convert_textblock(children)),
                         "sub" => ir::Text::Sub(convert_textblock(children)),
-                        "code" => ir::Text::Code(convert_textblock(children).into()),
-                        x => ir::Text::text("lmoa"),
+                        "code" => {
+                            let node = children.pop().unwrap_or(Node::Text("".to_string()));
+
+                            let content = match node {
+                                Node::Text(x) => x,
+                                _ => {
+                                    println!("code tag has non-text as children");
+                                    String::new()
+                                }
+                            };
+                            ir::Text::Code(content)
+                        }
+                        _ => ir::Text::text("lmoa"),
                     }
                 }
             }

@@ -53,14 +53,6 @@ impl From<String> for TextBlock {
     }
 }
 
-impl From<TextBlock> for String {
-    fn from(block: TextBlock) -> String {
-        block.into_iter()
-            .map(|child| String::from(child))
-            .collect()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

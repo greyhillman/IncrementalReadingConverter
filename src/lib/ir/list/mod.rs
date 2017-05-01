@@ -4,6 +4,9 @@ pub use self::item::ListItem;
 mod style;
 pub use self::style::ListType;
 
+mod content;
+pub use self::content::ListContent;
+
 #[derive(Debug, PartialEq)]
 pub struct List {
     style: ListType,
@@ -26,7 +29,10 @@ impl List {
         let mut items = self.items;
         items.push(item);
 
-        List { items: items, ..self }
+        List { 
+            items, 
+            .. self
+        }
     }
 }
 

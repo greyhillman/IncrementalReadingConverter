@@ -6,6 +6,7 @@ mod list;
 pub use self::list::List;
 pub use self::list::ListItem;
 pub use self::list::ListType;
+pub use self::list::ListContent;
 
 mod table;
 pub use self::table::TableCell;

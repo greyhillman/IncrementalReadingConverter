@@ -5,101 +5,131 @@ use self::itertools::join;
 
 use ir::*;
 
-fn convert_text(text: Text) -> String {
-    match text {
-        Text::Text(x) => x,
-        Text::Sup(x) => format!("^{{{}}}", convert_textblock(x)),
-        Text::Sub(x) => format!("_{{{}}}", convert_textblock(x)),
-        Text::Code(x) => format!("`{}`", x),
-    }
+pub trait ToAnki {
+    fn to_anki(self) -> String;
 }
 
-fn convert_textblock(text: TextBlock) -> String {
-    text.into_iter()
-        .map(|x| convert_text(x))
-        .collect()
+pub trait ToAnkiWithDepth {
+    fn to_anki(self, usize) -> String;
 }
 
-fn convert_list(depth: usize, list: List) -> String {
-    fn get_indent(depth: usize) -> String {
-        match depth {
-            0 => "".to_string(),
-            1 => "-".to_string(),
-            x => format!("{}--", get_indent(x - 1)),
+impl ToAnki for Text {
+    fn to_anki(self) -> String {
+        match self {
+            Text::Text(x) => x,
+            Text::Code(x) => format!("`{}`", x),
+            Text::Sub(block) => format!("_{{{}}}", block.to_anki()),
+            Text::Sup(block) => format!("^{{{}}}", block.to_anki()),
         }
     }
-    fn convert_listitem(depth: usize, item: ListItem) -> String {
-        match item {
-            ListItem::Item(text) => convert_textblock(text),
-            ListItem::Nested(text, list) => {
-                format!("{}\n{}",
-                        convert_textblock(text),
-                        convert_list(depth + 1, list))
+}
+
+impl ToAnki for TextBlock {
+    fn to_anki(self) -> String {
+        self.into_iter()
+            .map(|child| child.to_anki())
+            .collect()
+    }
+}
+
+impl ToAnkiWithDepth for ListContent {
+    fn to_anki(self, depth: usize) -> String {
+        match self {
+            ListContent::Text(x) => x.to_anki(),
+            ListContent::List(x) => x.to_anki(depth),
+        }
+    }
+}
+
+impl ToAnkiWithDepth for ListItem {
+    fn to_anki(self, depth: usize) -> String {
+        let content = self.into_iter()
+            .map(|content| content.to_anki(depth + 1));
+
+        join(content, "\n")
+    }
+}
+
+impl ToAnkiWithDepth for List {
+    fn to_anki(self, depth: usize) -> String {
+        match *self.style() {
+            ListType::Ordered => {
+                let indent = String::from("--").repeat(depth - 1);
+
+                let items = self.into_iter()
+                    .map(|item| item.to_anki(depth))
+                    .zip(1..)
+                    .map(|(item, num)| format!("{}{}) {}", indent, num, item));
+
+                join(items, "\n")
+            }
+            ListType::Unordered => {
+                let indent = String::from("--").repeat(depth);
+
+                let items = self.into_iter()
+                    .map(|item| item.to_anki(depth))
+                    .map(|item| format!("{} {}", indent, item));
+
+                join(items, "\n")
             }
         }
     }
+}
 
-    match *list.style() {
-        ListType::Ordered => {
-            let items = list.into_iter()
-                .map(|item| convert_listitem(depth, item))
-                .zip(1..)
-                .map(|(item, num)| format!("{}{}) {}", get_indent(depth - 1), num, item));
+impl ToAnki for TableCell {
+    fn to_anki(self) -> String {
+        self.text().to_anki()
+    }
+}
 
-            join(items, "\n")
-        }
-        ListType::Unordered => {
-            let items = list.into_iter()
-                .map(|item| convert_listitem(depth, item))
-                .map(|item| format!("{} {}", get_indent(depth), item));
+impl ToAnki for TableRow {
+    fn to_anki(self) -> String {
+        let cols = self.into_iter()
+            .map(|cell| cell.to_anki());
 
-            join(items, "\n")
+        join(cols, " | ")
+    }
+}
+
+impl ToAnki for Table {
+    fn to_anki(mut self) -> String {
+        let header = self.header();
+        let footer = self.footer();
+
+        let body = self.body()
+            .into_iter()
+            .map(|row| row.to_anki());
+        let body = join(body, "\n");
+
+        match (header, footer) {
+            (Some(h), Some(f)) => {
+                format!("{}\n-----\n{}\n-----\n{}",
+                        h.to_anki(),
+                        body,
+                        f.to_anki())
+            }
+            (None, Some(f)) => format!("{}\n-----\n{}", body, f.to_anki()),
+            (Some(h), None) => format!("{}\n-----\n{}", h.to_anki(), body),
+            (None, None) => format!("{}", body),
         }
     }
 }
 
-fn convert_table(mut table: Table) -> String {
-    fn convert_row(row: TableRow) -> String {
-        let row = row.into_iter()
-            .map(|cell| convert_textblock(cell.text()));
-
-        join(row, " | ")
-    }
-
-    let header = table.header();
-    let footer = table.footer();
-
-    let body = table.body()
-        .into_iter()
-        .map(convert_row);
-    let body = join(body, "\n");
-
-    match (header, footer) {
-        (Some(h), Some(f)) => {
-            format!("{}\n-----\n{}\n-----\n{}",
-                    convert_row(h),
-                    body,
-                    convert_row(f))
+impl ToAnki for IR {
+    fn to_anki(self) -> String {
+        match self {
+            IR::Img(src) => format!("<img src=\"{}\" />\n", src),
+            IR::Pre(content) => format!("```{}```\n\n", content),
+            IR::Par(text) => format!("{}\n\n", text.to_anki()),
+            IR::List(list) => format!("{}\n\n", list.to_anki(1)),
+            IR::Table(table) => format!("{}\n\n", table.to_anki()),
         }
-        (None, Some(f)) => format!("{}\n-----\n{}", body, convert_row(f)),
-        (Some(h), None) => format!("{}\n-----\n{}", convert_row(h), body),
-        (None, None) => format!("{}", body),
-    }
-}
-
-fn convert_ir(x: IR) -> String {
-    match x {
-        IR::Img(src) => format!("<img src=\"{}\" />\n", src),
-        IR::Pre(content) => format!("```{}```\n\n", content),
-        IR::Par(text) => format!("{}\n\n", convert_textblock(text)),
-        IR::List(list) => format!("{}\n\n", convert_list(1, list)),
-        IR::Table(table) => format!("{}\n\n", convert_table(table)),
     }
 }
 
 pub fn convert(document: Document) -> String {
     document.into_iter()
-        .map(|x| convert_ir(x))
+        .map(|x| x.to_anki())
         .collect::<String>()
         .trim()
         .to_string()

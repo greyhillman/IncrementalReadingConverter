@@ -1,18 +1,33 @@
-use ir::TextBlock;
-use ir::List;
+use super::ListContent;
 
 #[derive(Debug, PartialEq)]
-pub enum ListItem {
-    Item(TextBlock),
-    Nested(TextBlock, List),
+pub struct ListItem {
+    content: Vec<ListContent>,
 }
 
 impl ListItem {
-    pub fn item(text: TextBlock) -> Self {
-        ListItem::Item(text)
+    pub fn new() -> Self {
+        ListItem {
+            content: vec![]
+        }
     }
 
-    pub fn item_nested_list(text: TextBlock, list: List) -> Self {
-        ListItem::Nested(text, list)
+    pub fn add(self, c: ListContent) -> Self {
+        let mut content = self.content;
+        content.push(c);
+
+        ListItem {
+            content,
+            .. self
+        }
+    }
+}
+
+impl IntoIterator for ListItem {
+    type Item = ListContent;
+    type IntoIter = ::std::vec::IntoIter<ListContent>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.content.into_iter()
     }
 }

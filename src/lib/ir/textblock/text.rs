@@ -26,13 +26,3 @@ impl Text {
     }
 }
 
-impl From<Text> for String {
-    fn from(text: Text) -> String {
-        match text {
-            Text::Text(x) => x,
-            Text::Code(x) => x,
-            Text::Sub(block) => String::from(block),
-            Text::Sup(block) => String::from(block),
-        }
-    }
-}
