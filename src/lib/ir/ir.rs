@@ -12,12 +12,12 @@ pub enum IR {
 }
 
 impl IR {
-    pub fn img(src: String) -> Self {
-        IR::Img(src)
+    pub fn img(src: &str) -> Self {
+        IR::Img(src.to_string())
     }
 
-    pub fn pre(text: String) -> Self {
-        IR::Pre(text)
+    pub fn pre(text: &str) -> Self {
+        IR::Pre(text.to_string())
     }
 
     pub fn par(text: TextBlock) -> Self {

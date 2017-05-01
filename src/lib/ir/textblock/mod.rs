@@ -40,6 +40,27 @@ impl IntoIterator for TextBlock {
     }
 }
 
+impl From<Text> for TextBlock {
+    fn from(text: Text) -> Self {
+        TextBlock::new()
+            .add(text)
+    }
+}
+
+impl From<String> for TextBlock {
+    fn from(text: String) -> Self {
+        TextBlock::from(Text::text(&text))
+    }
+}
+
+impl From<TextBlock> for String {
+    fn from(block: TextBlock) -> String {
+        block.into_iter()
+            .map(|child| String::from(child))
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

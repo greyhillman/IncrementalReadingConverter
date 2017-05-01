@@ -37,6 +37,10 @@ impl Nodes {
 
         Nodes { nodes: nodes }
     }
+
+    pub fn pop(&mut self) -> Option<Node> {
+        self.nodes.pop()
+    }
 }
 
 impl FromIterator<Node> for Nodes {
@@ -52,5 +56,12 @@ impl IntoIterator for Nodes {
 
     fn into_iter(self) -> Self::IntoIter {
         self.nodes.into_iter()
+    }
+}
+
+impl From<Node> for Nodes {
+    fn from(node: Node) -> Self {
+        Nodes::new()
+            .add(node)
     }
 }

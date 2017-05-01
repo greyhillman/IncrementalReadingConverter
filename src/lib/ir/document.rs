@@ -1,5 +1,7 @@
 use ir::IR;
 
+use std::iter::FromIterator;
+
 #[derive(Debug, PartialEq)]
 pub struct Document {
     children: Vec<IR>,
@@ -24,5 +26,14 @@ impl IntoIterator for Document {
 
     fn into_iter(self) -> Self::IntoIter {
         self.children.into_iter()
+    }
+}
+
+impl FromIterator<IR> for Document {
+    fn from_iter<I>(iter: I) -> Self
+        where I: IntoIterator<Item=IR>
+    {
+        iter.into_iter()
+            .fold(Document::new(), |doc, child| doc.add(child))
     }
 }

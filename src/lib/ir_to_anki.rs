@@ -8,8 +8,8 @@ use ir::*;
 fn convert_text(text: Text) -> String {
     match text {
         Text::Text(x) => x,
-        Text::Sup(x) => format!("^{{{}}}", x),
-        Text::Sub(x) => format!("_{{{}}}", x),
+        Text::Sup(x) => format!("^{{{}}}", convert_textblock(x)),
+        Text::Sub(x) => format!("_{{{}}}", convert_textblock(x)),
         Text::Code(x) => format!("`{}`", x),
     }
 }

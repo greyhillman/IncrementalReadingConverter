@@ -1,6 +1,9 @@
 use super::Nodes;
 use super::Node;
 
+use super::super::optimize;
+//use super::super::convert;
+
 use ir;
 
 #[derive(Debug)]
@@ -18,6 +21,21 @@ impl Document {
     }
 
     pub fn convert(self) -> ir::Document {
-        ir::Document::new()
+        let doc = self.children.into_iter()
+            .flat_map(|child| optimize::remove_tags(child))
+            .collect::<Nodes>();
+        println!("Removed tags: {:#?}", doc);
+
+        let doc = doc.into_iter()
+            .flat_map(|child| optimize::handle_containers(child))
+            .collect::<Nodes>();
+        println!("handle_containers: {:#?}", doc);
+
+        let doc = doc.into_iter()
+            .map(|child| child.into())
+            .collect::<ir::Document>();
+        println!("convert: {:#?}", doc);
+
+        doc
     }
 }
