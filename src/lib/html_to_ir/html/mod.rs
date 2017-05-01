@@ -4,8 +4,6 @@ extern crate itertools;
 
 use self::html5ever::rcdom::Handle;
 
-use std::iter::FromIterator;
-
 mod node;
 pub use self::node::Node;
 
