@@ -1,5 +1,6 @@
 extern crate html5ever;
 extern crate itertools;
+//extern crate log;
 
 use self::html5ever::parse_document;
 use self::html5ever::rcdom::RcDom;
@@ -29,6 +30,7 @@ pub fn convert_file(contents: &str) -> ir::Document {
 mod tests {
     use super::*;
     use ir::*;
+    extern crate env_logger;
 
     fn body(content: &str) -> String {
         format!("<html><body>{}</body></html>", content)
@@ -122,6 +124,8 @@ mod tests {
 
     #[test]
     fn ol_ol() {
+        let _ = env_logger::init();
+
         let content = &body("<ol><li>a<ol><li>aa</li></ol></li></ol>");
         let result = Document::new()
             .add(IR::from(List::new(ListType::Ordered)
@@ -130,6 +134,8 @@ mod tests {
                                .add(ListContent::from(List::new(ListType::Ordered)
                                                      .add(ListItem::new()
                                                           .add(ListContent::from("aa"))))))));
+        info!("here");
+        warn!("here");
         assert_eq!(convert_file(content), result);
     }
 

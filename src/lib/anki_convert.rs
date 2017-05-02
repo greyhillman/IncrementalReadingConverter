@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate log;
+
 pub mod group_lines;
 pub mod ir_to_anki;
 pub mod html_to_ir;

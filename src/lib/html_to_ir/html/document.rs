@@ -24,17 +24,17 @@ impl Document {
         let doc = self.children.into_iter()
             .flat_map(|child| optimize::remove_tags(child))
             .collect::<Nodes>();
-        println!("Removed tags: {:#?}", doc);
+        debug!("Removed tags: {:#?}", doc);
 
         let doc = doc.into_iter()
             .flat_map(|child| optimize::handle_containers(child))
             .collect::<Nodes>();
-        println!("handle_containers: {:#?}", doc);
+        debug!("handle_containers: {:#?}", doc);
 
         let doc = doc.into_iter()
             .map(|child| child.into())
             .collect::<ir::Document>();
-        println!("convert: {:#?}", doc);
+        debug!("convert: {:#?}", doc);
 
         doc
     }

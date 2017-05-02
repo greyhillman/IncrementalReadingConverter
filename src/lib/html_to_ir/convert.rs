@@ -1,3 +1,5 @@
+extern crate log;
+
 use ir;
 use super::html::Node;
 use super::html::Nodes;
@@ -36,12 +38,14 @@ impl Into<ir::IR> for Node {
                         ir::IR::pre(&content)
                     }
                     "ol" => {
-                        ir::IR::from(convert_list(ir::ListType::Ordered, children))
+                        info!("Converting ol");
+                        ir::IR::from(convert_list(ir::ListType::Unordered, children))
                     }
                     "ul" => {
                         ir::IR::from(convert_list(ir::ListType::Unordered, children))
                     }
                     _ => {
+                        info!("Could not handle element {}", tag);
                         ir::IR::pre(&format!("Could not handle element {}.", tag))
                     }
                 }
