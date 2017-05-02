@@ -150,16 +150,17 @@ mod tests {
     fn par() {
         let par = IR::par(TextBlock::new().add(Text::text("a")));
         let result = "a\n\n".to_string();
-        assert_eq!(convert_ir(par), result);
+        assert_eq!(par.to_anki(), result);
     }
 
     #[test]
     fn ordered_list_single_item() {
         let text = TextBlock::new().add(Text::text("a"));
-        let item = ListItem::item(text);
+        let item = ListItem::new()
+            .add(ListContent::Text(text));
         let list = IR::list(List::new(ListType::Ordered).add(item));
         let result = "1) a\n\n".to_string();
-        assert_eq!(convert_ir(list), result);
+        assert_eq!(list.to_anki(), result);
     }
 
     #[test]
@@ -172,7 +173,7 @@ mod tests {
             .add(item1)
             .add(item2));
         let result = "1) a\n2) a\n\n".to_string();
-        assert_eq!(convert_ir(list), result);
+        assert_eq!(list.to_anki(), result);
     }
 
     #[test]
@@ -180,8 +181,8 @@ mod tests {
         let text = TextBlock::new().add(Text::text("a"));
         let item = ListItem::item(text);
         let list = IR::list(List::new(ListType::Unordered).add(item));
-        let result = "- a\n\n".to_string();
-        assert_eq!(convert_ir(list), result);
+        let result = "-- a\n\n".to_string();
+        assert_eq!(list.to_anki(), result);
     }
 
     #[test]
@@ -193,8 +194,8 @@ mod tests {
         let list = IR::list(List::new(ListType::Unordered)
             .add(item1)
             .add(item2));
-        let result = "- a\n- a\n\n".to_string();
-        assert_eq!(convert_ir(list), result);
+        let result = "-- a\n-- a\n\n".to_string();
+        assert_eq!(list.to_anki(), result);
     }
 
     #[test]
@@ -206,8 +207,8 @@ mod tests {
         let text = TextBlock::new().add(Text::text("parent"));
         let item = ListItem::item_nested_list(text, nested_list);
         let list = IR::list(List::new(ListType::Ordered).add(item));
-        let result = "1) parent\n-1) child\n\n".to_string();
-        assert_eq!(convert_ir(list), result);
+        let result = "1) parent\n--1) child\n\n".to_string();
+        assert_eq!(list.to_anki(), result);
     }
 
     #[test]
@@ -219,8 +220,8 @@ mod tests {
         let text = TextBlock::new().add(Text::text("parent"));
         let item = ListItem::item_nested_list(text, nested_list);
         let list = IR::list(List::new(ListType::Ordered).add(item));
-        let result = "1) parent\n--- child\n\n".to_string();
-        assert_eq!(convert_ir(list), result);
+        let result = "1) parent\n---- child\n\n".to_string();
+        assert_eq!(list.to_anki(), result);
     }
 
     #[test]
@@ -232,21 +233,24 @@ mod tests {
         let text = TextBlock::new().add(Text::text("parent"));
         let item = ListItem::item_nested_list(text, nested_list);
         let list = IR::list(List::new(ListType::Unordered).add(item));
-        let result = "- parent\n-1) child\n\n".to_string();
-        assert_eq!(convert_ir(list), result);
+        let result = "-- parent\n--1) child\n\n".to_string();
+        assert_eq!(list.to_anki(), result);
     }
 
     #[test]
     fn unordered_list_nested_unordered_list() {
         let text = TextBlock::new().add(Text::text("child"));
-        let item = ListItem::item(text);
+        let item = ListItem::new()
+            .add(ListContent::Text(text));
         let nested_list = List::new(ListType::Unordered).add(item);
 
         let text = TextBlock::new().add(Text::text("parent"));
-        let item = ListItem::item_nested_list(text, nested_list);
+        let item = ListItem::new()
+            .add(ListContent::Text(text))
+            .add(ListContent::List(nested_list));
         let list = IR::list(List::new(ListType::Unordered).add(item));
-        let result = "- parent\n--- child\n\n".to_string();
-        assert_eq!(convert_ir(list), result);
+        let result = "-- parent\n---- child\n\n".to_string();
+        assert_eq!(list.to_anki(), result);
     }
 
     #[test]
@@ -274,6 +278,6 @@ mod tests {
         let result = "\
                       a | b\n-----\na | b\n-----\na | b\n\n"
             .to_string();
-        assert_eq!(convert_ir(table), result);
+        assert_eq!(table.to_anki(), result);
     }
 }

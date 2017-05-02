@@ -1,4 +1,6 @@
 use super::ListContent;
+use super::List;
+use ir::TextBlock;
 
 #[derive(Debug, PartialEq)]
 pub struct ListItem {
@@ -20,6 +22,16 @@ impl ListItem {
             content,
             .. self
         }
+    }
+
+    pub fn item(text: TextBlock) -> Self {
+        ListItem::new()
+            .add(ListContent::Text(text))
+    }
+
+    pub fn item_nested_list(text: TextBlock, list: List) -> Self {
+        ListItem::item(text)
+            .add(ListContent::List(list))
     }
 }
 
