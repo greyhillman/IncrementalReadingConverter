@@ -30,6 +30,7 @@ pub fn convert_file(contents: &str) -> ir::Document {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ir::*;
 
     fn body(content: &str) -> String {
         format!("<html><body>{}</body></html>", content)
@@ -98,7 +99,78 @@ mod tests {
     #[test]
     fn ol() {
         let content = &body("<ol><li>a</li><li>b</li></ol>");
+        let result = Document::new()
+            .add(IR::from(List::new(ListType::Ordered)
+                          .add(ListItem::new()
+                               .add(ListContent::from(TextBlock::from("a"))))
+                          .add(ListItem::new()
+                               .add(ListContent::from(TextBlock::from("b"))))
+                          ));
+        assert_eq!(convert_file(content), result);
+    }
 
+    #[test]
+    fn ul() {
+        let content = &body("<ul><li>a</li><li>b</li></ul>");
+        let result = Document::new()
+            .add(IR::from(List::new(ListType::Unordered)
+                          .add(ListItem::new()
+                               .add(ListContent::from(TextBlock::from("a"))))
+                          .add(ListItem::new()
+                               .add(ListContent::from(TextBlock::from("b"))))
+                          ));
+        assert_eq!(convert_file(content), result);
+    }
 
+    #[test]
+    fn ol_ol() {
+        let content = &body("<ol><li>a<ol><li>aa</li></ol></li></ol>");
+        let result = Document::new()
+            .add(IR::from(List::new(ListType::Ordered)
+                          .add(ListItem::new()
+                               .add(ListContent::from("a"))
+                               .add(ListContent::from(List::new(ListType::Ordered)
+                                                     .add(ListItem::new()
+                                                          .add(ListContent::from("aa"))))))));
+        assert_eq!(convert_file(content), result);
+    }
+
+    #[test]
+    fn ol_ul() {
+        let content = &body("<ol><li>a<ul><li>aa</li></ul></li></ol>");
+        let result = Document::new()
+            .add(IR::from(List::new(ListType::Ordered)
+                          .add(ListItem::new()
+                               .add(ListContent::from("a"))
+                               .add(ListContent::from(List::new(ListType::Unordered)
+                                                     .add(ListItem::new()
+                                                          .add(ListContent::from("aa"))))))));
+        assert_eq!(convert_file(content), result);
+    }
+
+    #[test]
+    fn ul_ol() {
+        let content = &body("<ul><li>a<ol><li>aa</li></ol></li></ul>");
+        let result = Document::new()
+            .add(IR::from(List::new(ListType::Unordered)
+                          .add(ListItem::new()
+                               .add(ListContent::from("a"))
+                               .add(ListContent::from(List::new(ListType::Ordered)
+                                                     .add(ListItem::new()
+                                                          .add(ListContent::from("aa"))))))));
+        assert_eq!(convert_file(content), result);
+    }
+
+    #[test]
+    fn ul_ul() {
+        let content = &body("<ul><li>a<ul><li>aa</li></ul></li></ul>");
+        let result = Document::new()
+            .add(IR::from(List::new(ListType::Unordered)
+                          .add(ListItem::new()
+                               .add(ListContent::from("a"))
+                               .add(ListContent::from(List::new(ListType::Unordered)
+                                                     .add(ListItem::new()
+                                                          .add(ListContent::from("aa"))))))));
+        assert_eq!(convert_file(content), result);
     }
 }

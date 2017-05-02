@@ -14,6 +14,22 @@ pub enum Node {
     },
 }
 
+impl Node {
+    pub fn is_text(&self) -> bool {
+        match *self {
+            Node::Text(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_element(&self) -> bool {
+        match *self {
+            Node::Element { .. } => true,
+            _ => false,
+        }
+    }
+}
+
 impl<'a> From<&'a Handle> for Node {
     fn from(handle: &Handle) -> Self {
         let node = handle.borrow();

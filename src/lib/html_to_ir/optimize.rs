@@ -15,7 +15,7 @@ pub fn remove_tags(node: Node) -> Nodes {
             let children = handle_children(children);
 
             match tag.as_str() {
-                "head" | "script" | "style" | "span" => children,
+                "head" | "script" | "style" | "span" | "a" | "em" | "strong" | "mark" | "b" => children,
                 "nav" | "header" | "footer" | "body" | "html" => {
                     let tag = "div".to_string();
 

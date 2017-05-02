@@ -35,6 +35,12 @@ impl Into<ir::IR> for Node {
 
                         ir::IR::pre(&content)
                     }
+                    "ol" => {
+                        ir::IR::from(convert_list(ir::ListType::Ordered, children))
+                    }
+                    "ul" => {
+                        ir::IR::from(convert_list(ir::ListType::Unordered, children))
+                    }
                     _ => {
                         ir::IR::pre(&format!("Could not handle element {}.", tag))
                     }
@@ -44,7 +50,43 @@ impl Into<ir::IR> for Node {
     }
 }
 
-pub fn convert_textblock(nodes: Nodes) -> ir::TextBlock {
+fn convert_list(style: ir::ListType, items: Nodes) -> ir::List {
+    items.into_iter()
+         .filter(|ref child| child.is_element())
+         .map(|child| match child {
+             Node::Text(_) => panic!("There should be no text now"),
+             Node::Element { tag, children, .. } => {
+                 match tag.as_str() {
+                     "li" => convert_list_item(children),
+                     _ => panic!("There is a none li tag in the list"),
+                 }
+             }
+         })
+         .fold(ir::List::new(style), |list, item| list.add(item))
+}
+
+fn convert_list_item(children: Nodes) -> ir::ListItem {
+    children.into_iter()
+        .map(|child| match child {
+            Node::Text(x) => ir::ListContent::from(x),
+            Node::Element { tag, children, .. } => {
+                match tag.as_str() {
+                    "ol" => {
+                        ir::ListContent::from(convert_list(ir::ListType::Ordered, children))
+                    }
+                    "ul" => {
+                        ir::ListContent::from(convert_list(ir::ListType::Unordered, children))
+                    }
+                    _ => {
+                        panic!("Found {} tag in a list", tag)
+                    }
+                }
+            }
+        })
+        .fold(ir::ListItem::new(), |item, content| item.add(content))
+}
+
+fn convert_textblock(nodes: Nodes) -> ir::TextBlock {
     nodes.into_iter()
         .map(|node| {
             match node {

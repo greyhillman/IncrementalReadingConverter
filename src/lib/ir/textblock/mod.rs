@@ -53,6 +53,13 @@ impl From<String> for TextBlock {
     }
 }
 
+impl <'a> From<&'a str> for TextBlock {
+    fn from(text: &str) -> Self {
+        TextBlock::from(Text::text(text))
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
