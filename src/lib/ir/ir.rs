@@ -19,16 +19,22 @@ impl IR {
     pub fn pre(text: &str) -> Self {
         IR::Pre(text.to_string())
     }
+}
 
-    pub fn par(text: TextBlock) -> Self {
+impl From<TextBlock> for IR {
+    fn from(text: TextBlock) -> Self {
         IR::Par(text)
     }
+}
 
-    pub fn list(list: List) -> Self {
+impl From<List> for IR {
+    fn from(list: List) -> Self {
         IR::List(list)
     }
+}
 
-    pub fn table(table: Table) -> Self {
+impl From<Table> for IR {
+    fn from(table: Table) -> Self {
         IR::Table(table)
     }
 }

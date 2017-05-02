@@ -74,7 +74,7 @@ mod tests {
     fn par() {
         let content = &body("<p>Text</p>");
         let result = ir::Document::new()
-            .add(ir::IR::par(ir::TextBlock::new()
+            .add(ir::IR::from(ir::TextBlock::new()
                              .add(ir::Text::text("Text"))));
         assert_eq!(convert_file(content), result);
     }
@@ -93,5 +93,12 @@ mod tests {
         let result = ir::Document::new()
             .add(ir::IR::pre("x = 1\n\nx"));
         assert_eq!(convert_file(content), result);
+    }
+
+    #[test]
+    fn ol() {
+        let content = &body("<ol><li>a</li><li>b</li></ol>");
+
+
     }
 }

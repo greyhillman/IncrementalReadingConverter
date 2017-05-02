@@ -8,7 +8,7 @@ impl Into<ir::IR> for Node {
             Node::Text(x) => {
                 println!("Shouldn't really have a text node at the top level.");
 
-                ir::IR::par(convert_textblock(Nodes::from(Node::Text(x))))
+                ir::IR::from(convert_textblock(Nodes::from(Node::Text(x))))
             }
             Node::Element { tag, attributes, mut children } => {
                 match tag.as_str() {
@@ -20,7 +20,7 @@ impl Into<ir::IR> for Node {
                         ir::IR::img(&src)
                     }
                     "p" => {
-                        ir::IR::par(convert_textblock(children))
+                        ir::IR::from(convert_textblock(children))
                     }
                     "pre" => {
                         let node = children.pop().unwrap_or(Node::Text("".to_string()));
