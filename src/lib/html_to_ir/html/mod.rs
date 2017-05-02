@@ -1,5 +1,4 @@
 extern crate html5ever;
-extern crate xmltree;
 extern crate itertools;
 
 use self::html5ever::rcdom::Handle;

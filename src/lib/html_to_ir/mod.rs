@@ -1,6 +1,4 @@
 extern crate html5ever;
-extern crate regex;
-extern crate xmltree;
 extern crate itertools;
 
 use self::html5ever::parse_document;
