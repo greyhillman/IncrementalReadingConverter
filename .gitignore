@@ -5,3 +5,5 @@ target
 *.bk
 *.lock
 *.swp
+
+Cargo.lock
