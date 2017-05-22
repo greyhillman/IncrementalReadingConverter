@@ -1,31 +1,37 @@
 mod text;
 pub use self::text::Text;
 
-#[derive(Debug, PartialEq)]
-pub struct TextBlock(Vec<Text>);
+#[derive(Debug, PartialEq, Clone)]
+pub struct TextBlock{
+    content: Vec<Text>
+}
 
 impl TextBlock {
     pub fn new() -> Self {
-        TextBlock(vec![])
+        TextBlock {
+            content: vec![]
+        }
     }
 
-    pub fn add(self, text: Text) -> Self {
-        let TextBlock(mut content) = self;
-
-        match (content.pop(), text) {
+    pub fn add(&mut self, text: Text) -> &mut Self {
+        match (self.content.pop(), text) {
             (Some(Text::Text(x)), Text::Text(y)) => {
-                content.push(Text::Text(x + &y));
+                self.content.push(Text::Text(x + &y));
             }
             (Some(x), y) => {
-                content.push(x);
-                content.push(y);
+                self.content.push(x);
+                self.content.push(y);
             }
             (None, x) => {
-                content.push(x);
+                self.content.push(x);
             }
         }
 
-        TextBlock(content)
+        self
+    }
+
+    pub fn build(&self) -> Self {
+        self.clone()
     }
 }
 
@@ -34,9 +40,7 @@ impl IntoIterator for TextBlock {
     type IntoIter = ::std::vec::IntoIter<Text>;
 
     fn into_iter(self) -> Self::IntoIter {
-        let TextBlock(content) = self;
-
-        content.into_iter()
+        self.content.into_iter()
     }
 }
 
@@ -44,6 +48,7 @@ impl From<Text> for TextBlock {
     fn from(text: Text) -> Self {
         TextBlock::new()
             .add(text)
+            .build()
     }
 }
 
@@ -68,8 +73,9 @@ mod tests {
     fn adjacent_text() {
         let block = TextBlock::new()
             .add(Text::text("a "))
-            .add(Text::text("b"));
-        let result = TextBlock::new().add(Text::text("a b"));
+            .add(Text::text("b"))
+            .build();
+        let result = TextBlock::from("a b");
         assert_eq!(block, result);
     }
 
@@ -80,11 +86,13 @@ mod tests {
             .add(Text::text("b"))
             .add(Text::code("i = 1"))
             .add(Text::text("c "))
-            .add(Text::text("d"));
+            .add(Text::text("d"))
+            .build();
         let result = TextBlock::new()
             .add(Text::text("a b"))
             .add(Text::code("i = 1"))
-            .add(Text::text("c d"));
+            .add(Text::text("c d"))
+            .build();
         assert_eq!(block, result);
     }
 }

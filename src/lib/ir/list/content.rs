@@ -1,7 +1,7 @@
 use super::List;
 use ir::TextBlock;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ListContent {
     Text(TextBlock),
     List(List),

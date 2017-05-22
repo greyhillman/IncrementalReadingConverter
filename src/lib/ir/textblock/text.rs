@@ -1,6 +1,6 @@
 use super::TextBlock;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Text {
     Text(String),
     Sub(TextBlock),

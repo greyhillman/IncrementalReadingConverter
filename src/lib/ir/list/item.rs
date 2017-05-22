@@ -2,7 +2,7 @@ use super::ListContent;
 use super::List;
 use ir::TextBlock;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ListItem {
     content: Vec<ListContent>,
 }
@@ -14,24 +14,26 @@ impl ListItem {
         }
     }
 
-    pub fn add(self, c: ListContent) -> Self {
-        let mut content = self.content;
-        content.push(c);
+    pub fn add(&mut self, content: ListContent) -> &mut Self {
+        self.content.push(content);
+        self
+    }
 
-        ListItem {
-            content,
-            .. self
-        }
+    pub fn build(&self) -> Self {
+        self.clone()
     }
 
     pub fn item(text: TextBlock) -> Self {
         ListItem::new()
             .add(ListContent::Text(text))
+            .build()
     }
 
     pub fn item_nested_list(text: TextBlock, list: List) -> Self {
-        ListItem::item(text)
+        ListItem::new()
+            .add(ListContent::Text(text))
             .add(ListContent::List(list))
+            .build()
     }
 }
 

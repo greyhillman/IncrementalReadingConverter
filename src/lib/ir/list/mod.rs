@@ -7,7 +7,7 @@ pub use self::style::ListType;
 mod content;
 pub use self::content::ListContent;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct List {
     style: ListType,
     items: Vec<ListItem>,
@@ -25,14 +25,13 @@ impl List {
         &self.style
     }
 
-    pub fn add(self, item: ListItem) -> Self {
-        let mut items = self.items;
-        items.push(item);
+    pub fn add(&mut self, item: ListItem) -> &mut Self {
+        self.items.push(item);
+        self
+    }
 
-        List { 
-            items, 
-            .. self
-        }
+    pub fn build(&self) -> Self {
+        self.clone()
     }
 }
 

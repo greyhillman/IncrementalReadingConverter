@@ -1,6 +1,6 @@
 use ir::TableCell;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct TableRow {
     columns: Vec<TableCell>,
 }
@@ -10,11 +10,13 @@ impl TableRow {
         TableRow { columns: vec![] }
     }
 
-    pub fn add(self, cell: TableCell) -> Self {
-        let mut columns = self.columns;
-        columns.push(cell);
+    pub fn add(&mut self, cell: TableCell) -> &mut Self {
+        self.columns.push(cell);
+        self
+    }
 
-        TableRow { columns: columns, ..self }
+    pub fn build(&self) -> Self {
+        self.clone()
     }
 }
 

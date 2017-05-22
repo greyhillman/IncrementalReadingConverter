@@ -66,7 +66,8 @@ fn convert_list(style: ir::ListType, items: Nodes) -> ir::List {
                  }
              }
          })
-         .fold(ir::List::new(style), |list, item| list.add(item))
+         .fold(&mut ir::List::new(style), |list, item| list.add(item))
+         .build()
 }
 
 fn convert_list_item(children: Nodes) -> ir::ListItem {
@@ -87,7 +88,8 @@ fn convert_list_item(children: Nodes) -> ir::ListItem {
                 }
             }
         })
-        .fold(ir::ListItem::new(), |item, content| item.add(content))
+        .fold(&mut ir::ListItem::new(), |item, content| item.add(content))
+        .build()
 }
 
 fn convert_textblock(nodes: Nodes) -> ir::TextBlock {
@@ -116,5 +118,6 @@ fn convert_textblock(nodes: Nodes) -> ir::TextBlock {
                 }
             }
         })
-        .fold(ir::TextBlock::new(), |block, node| block.add(node))
+        .fold(&mut ir::TextBlock::new(), |block, node| block.add(node))
+        .build()
 }

@@ -4,7 +4,7 @@ pub use self::cell::TableCell;
 mod row;
 pub use self::row::TableRow;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Table {
     header: Option<TableRow>,
     body: Vec<TableRow>,
@@ -20,19 +20,23 @@ impl Table {
         }
     }
 
-    pub fn set_header(self, header: TableRow) -> Self {
-        Table { header: Some(header), ..self }
+    pub fn set_header(&mut self, header: TableRow) -> &mut Self {
+        self.header = Some(header);
+        self
     }
 
-    pub fn set_footer(self, footer: TableRow) -> Self {
-        Table { footer: Some(footer), ..self }
+    pub fn set_footer(&mut self, footer: TableRow) -> &mut Self {
+        self.footer = Some(footer);
+        self
     }
 
-    pub fn add(self, row: TableRow) -> Self {
-        let mut body = self.body;
-        body.push(row);
+    pub fn add(&mut self, row: TableRow) -> &mut Self {
+        self.body.push(row);
+        self
+    }
 
-        Table { body: body, ..self }
+    pub fn build(&self) -> Self {
+        self.clone()
     }
 
     pub fn header(&mut self) -> Option<TableRow> {

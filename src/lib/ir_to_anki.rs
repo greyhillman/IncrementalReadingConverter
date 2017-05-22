@@ -148,133 +148,165 @@ mod tests {
 
     #[test]
     fn par() {
-        let par = IR::from(TextBlock::new().add(Text::text("a")));
+        let par = IR::from(TextBlock::from("a"));
         let result = "a\n\n".to_string();
         assert_eq!(par.to_anki(), result);
     }
 
     #[test]
     fn ordered_list_single_item() {
-        let text = TextBlock::new().add(Text::text("a"));
-        let item = ListItem::new()
-            .add(ListContent::from(text));
-        let list = IR::from(List::new(ListType::Ordered).add(item));
+        let text = TextBlock::from("a");
+        let item = ListItem::item(text);
+        let list = List::new(ListType::Ordered)
+            .add(item)
+            .build();
+        let list = IR::from(list);
         let result = "1) a\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }
 
     #[test]
     fn ordered_list_multiple_item() {
-        let text1 = TextBlock::new().add(Text::text("a"));
-        let text2 = TextBlock::new().add(Text::text("a"));
-        let item1 = ListItem::item(text1);
-        let item2 = ListItem::item(text2);
-        let list = IR::from(List::new(ListType::Ordered)
-            .add(item1)
-            .add(item2));
+        let text = TextBlock::from("a");
+        let item = ListItem::new()
+            .add(ListContent::from(text))
+            .build();
+        let list = List::new(ListType::Ordered)
+            .add(item.clone())
+            .add(item.clone())
+            .build();
+        let list = IR::from(list);
         let result = "1) a\n2) a\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }
 
     #[test]
     fn unordered_list_single_item() {
-        let text = TextBlock::new().add(Text::text("a"));
+        let text = TextBlock::from("a");
         let item = ListItem::item(text);
-        let list = IR::from(List::new(ListType::Unordered).add(item));
+        let list = List::new(ListType::Unordered)
+            .add(item)
+            .build();
+        let list = IR::from(list);
         let result = "-- a\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }
 
     #[test]
     fn unordered_list_multiple_item() {
-        let text1 = TextBlock::new().add(Text::text("a"));
-        let text2 = TextBlock::new().add(Text::text("a"));
-        let item1 = ListItem::item(text1);
-        let item2 = ListItem::item(text2);
-        let list = IR::from(List::new(ListType::Unordered)
-            .add(item1)
-            .add(item2));
+        let text = TextBlock::from("a");
+        let item = ListItem::new()
+            .add(ListContent::from(text))
+            .build();
+        let list = List::new(ListType::Unordered)
+            .add(item.clone())
+            .add(item.clone())
+            .build();
+        let list = IR::from(list);
         let result = "-- a\n-- a\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }
 
     #[test]
     fn ordered_list_nested_ordered_list() {
-        let text = TextBlock::new().add(Text::text("child"));
-        let item = ListItem::item(text);
-        let nested_list = List::new(ListType::Ordered).add(item);
+        let text = TextBlock::from("child");
+        let nested_list = List::new(ListType::Ordered)
+            .add(ListItem::new()
+                 .add(ListContent::from(text))
+                 .build())
+            .build();
 
-        let text = TextBlock::new().add(Text::text("parent"));
-        let item = ListItem::item_nested_list(text, nested_list);
-        let list = IR::from(List::new(ListType::Ordered).add(item));
+        let text = TextBlock::from("parent");
+        let list = IR::from(List::new(ListType::Ordered)
+                            .add(ListItem::new()
+                                 .add(ListContent::from(text))
+                                 .add(ListContent::from(nested_list))
+                                 .build())
+                            .build());
         let result = "1) parent\n--1) child\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }
 
     #[test]
     fn ordered_list_nested_unordered_list() {
-        let text = TextBlock::new().add(Text::text("child"));
-        let item = ListItem::item(text);
-        let nested_list = List::new(ListType::Unordered).add(item);
+        let text = TextBlock::from("child");
+        let nested_list = List::new(ListType::Unordered)
+            .add(ListItem::new()
+                 .add(ListContent::from(text))
+                 .build())
+            .build();
 
-        let text = TextBlock::new().add(Text::text("parent"));
-        let item = ListItem::item_nested_list(text, nested_list);
-        let list = IR::from(List::new(ListType::Ordered).add(item));
+        let text = TextBlock::from("parent");
+        let list = IR::from(List::new(ListType::Ordered)
+                            .add(ListItem::new()
+                                 .add(ListContent::from(text))
+                                 .add(ListContent::from(nested_list))
+                                 .build())
+                            .build());
         let result = "1) parent\n---- child\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }
 
     #[test]
     fn unordered_list_nested_ordered_list() {
-        let text = TextBlock::new().add(Text::text("child"));
-        let item = ListItem::item(text);
-        let nested_list = List::new(ListType::Ordered).add(item);
+        let text = TextBlock::from("child");
+        let nested_list = List::new(ListType::Ordered)
+            .add(ListItem::new()
+                 .add(ListContent::from(text))
+                 .build())
+            .build();
 
-        let text = TextBlock::new().add(Text::text("parent"));
-        let item = ListItem::item_nested_list(text, nested_list);
-        let list = IR::from(List::new(ListType::Unordered).add(item));
+        let text = TextBlock::from("parent");
+        let list = IR::from(List::new(ListType::Unordered)
+                            .add(ListItem::new()
+                                 .add(ListContent::from(text))
+                                 .add(ListContent::from(nested_list))
+                                 .build())
+                            .build());
         let result = "-- parent\n--1) child\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }
 
     #[test]
     fn unordered_list_nested_unordered_list() {
-        let text = TextBlock::new().add(Text::text("child"));
-        let item = ListItem::new()
-            .add(ListContent::from(text));
-        let nested_list = List::new(ListType::Unordered).add(item);
+        let text = TextBlock::from("child");
+        let nested_list = List::new(ListType::Unordered)
+            .add(ListItem::new()
+                 .add(ListContent::from(text))
+                 .build())
+            .build();
 
-        let text = TextBlock::new().add(Text::text("parent"));
-        let item = ListItem::new()
-            .add(ListContent::from(text))
-            .add(ListContent::from(nested_list));
-        let list = IR::from(List::new(ListType::Unordered).add(item));
+        let text = TextBlock::from("parent");
+        let list = IR::from(List::new(ListType::Unordered)
+                            .add(ListItem::new()
+                                 .add(ListContent::from(text))
+                                 .add(ListContent::from(nested_list))
+                                 .build())
+                            .build());
         let result = "-- parent\n---- child\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }
 
     #[test]
     fn table() {
-        let cell1 = TableCell::new(TextBlock::new().add(Text::text("a")));
-        let cell2 = TableCell::new(TextBlock::new().add(Text::text("b")));
-        let header = TableRow::new()
-            .add(cell1)
-            .add(cell2);
-        let cell1 = TableCell::new(TextBlock::new().add(Text::text("a")));
-        let cell2 = TableCell::new(TextBlock::new().add(Text::text("b")));
+        let cell_a = TableCell::new(TextBlock::from("a"));
+        let cell_b = TableCell::new(TextBlock::from("b"));
+
         let row = TableRow::new()
-            .add(cell1)
-            .add(cell2);
-        let cell1 = TableCell::new(TextBlock::new().add(Text::text("a")));
-        let cell2 = TableCell::new(TextBlock::new().add(Text::text("b")));
-        let footer = TableRow::new()
-            .add(cell1)
-            .add(cell2);
+            .add(cell_a)
+            .add(cell_b)
+            .build();
+
+        let header = row.clone();
+        let footer = row.clone();
+        let row = row.clone();
 
         let table = IR::from(Table::new()
             .set_header(header)
             .add(row)
-            .set_footer(footer));
+            .set_footer(footer)
+            .build());
+
         let result = "\
                       a | b\n-----\na | b\n-----\na | b\n\n"
             .to_string();
