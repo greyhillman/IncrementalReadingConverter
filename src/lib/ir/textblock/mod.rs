@@ -2,15 +2,13 @@ mod text;
 pub use self::text::Text;
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct TextBlock{
-    content: Vec<Text>
+pub struct TextBlock {
+    content: Vec<Text>,
 }
 
 impl TextBlock {
     pub fn new() -> Self {
-        TextBlock {
-            content: vec![]
-        }
+        TextBlock { content: vec![] }
     }
 
     pub fn add(&mut self, text: Text) -> &mut Self {
@@ -58,7 +56,7 @@ impl From<String> for TextBlock {
     }
 }
 
-impl <'a> From<&'a str> for TextBlock {
+impl<'a> From<&'a str> for TextBlock {
     fn from(text: &str) -> Self {
         TextBlock::from(Text::text(text))
     }

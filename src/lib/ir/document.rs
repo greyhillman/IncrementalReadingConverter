@@ -31,7 +31,7 @@ impl IntoIterator for Document {
 
 impl FromIterator<IR> for Document {
     fn from_iter<I>(iter: I) -> Self
-        where I: IntoIterator<Item=IR>
+        where I: IntoIterator<Item = IR>
     {
         iter.into_iter()
             .fold(Document::new(), |doc, child| doc.add(child))

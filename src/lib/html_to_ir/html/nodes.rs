@@ -61,7 +61,6 @@ impl IntoIterator for Nodes {
 
 impl From<Node> for Nodes {
     fn from(node: Node) -> Self {
-        Nodes::new()
-            .add(node)
+        Nodes::new().add(node)
     }
 }

@@ -9,9 +9,7 @@ pub struct ListItem {
 
 impl ListItem {
     pub fn new() -> Self {
-        ListItem {
-            content: vec![]
-        }
+        ListItem { content: vec![] }
     }
 
     pub fn add(&mut self, content: ListContent) -> &mut Self {

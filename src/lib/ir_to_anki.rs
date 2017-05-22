@@ -103,10 +103,7 @@ impl ToAnki for Table {
 
         match (header, footer) {
             (Some(h), Some(f)) => {
-                format!("{}\n-----\n{}\n-----\n{}",
-                        h.to_anki(),
-                        body,
-                        f.to_anki())
+                format!("{}\n-----\n{}\n-----\n{}", h.to_anki(), body, f.to_anki())
             }
             (None, Some(f)) => format!("{}\n-----\n{}", body, f.to_anki()),
             (Some(h), None) => format!("{}\n-----\n{}", h.to_anki(), body),
@@ -212,17 +209,17 @@ mod tests {
         let text = TextBlock::from("child");
         let nested_list = List::new(ListType::Ordered)
             .add(ListItem::new()
-                 .add(ListContent::from(text))
-                 .build())
+                .add(ListContent::from(text))
+                .build())
             .build();
 
         let text = TextBlock::from("parent");
         let list = IR::from(List::new(ListType::Ordered)
-                            .add(ListItem::new()
-                                 .add(ListContent::from(text))
-                                 .add(ListContent::from(nested_list))
-                                 .build())
-                            .build());
+            .add(ListItem::new()
+                .add(ListContent::from(text))
+                .add(ListContent::from(nested_list))
+                .build())
+            .build());
         let result = "1) parent\n--1) child\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }
@@ -232,17 +229,17 @@ mod tests {
         let text = TextBlock::from("child");
         let nested_list = List::new(ListType::Unordered)
             .add(ListItem::new()
-                 .add(ListContent::from(text))
-                 .build())
+                .add(ListContent::from(text))
+                .build())
             .build();
 
         let text = TextBlock::from("parent");
         let list = IR::from(List::new(ListType::Ordered)
-                            .add(ListItem::new()
-                                 .add(ListContent::from(text))
-                                 .add(ListContent::from(nested_list))
-                                 .build())
-                            .build());
+            .add(ListItem::new()
+                .add(ListContent::from(text))
+                .add(ListContent::from(nested_list))
+                .build())
+            .build());
         let result = "1) parent\n---- child\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }
@@ -252,17 +249,17 @@ mod tests {
         let text = TextBlock::from("child");
         let nested_list = List::new(ListType::Ordered)
             .add(ListItem::new()
-                 .add(ListContent::from(text))
-                 .build())
+                .add(ListContent::from(text))
+                .build())
             .build();
 
         let text = TextBlock::from("parent");
         let list = IR::from(List::new(ListType::Unordered)
-                            .add(ListItem::new()
-                                 .add(ListContent::from(text))
-                                 .add(ListContent::from(nested_list))
-                                 .build())
-                            .build());
+            .add(ListItem::new()
+                .add(ListContent::from(text))
+                .add(ListContent::from(nested_list))
+                .build())
+            .build());
         let result = "-- parent\n--1) child\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }
@@ -272,17 +269,17 @@ mod tests {
         let text = TextBlock::from("child");
         let nested_list = List::new(ListType::Unordered)
             .add(ListItem::new()
-                 .add(ListContent::from(text))
-                 .build())
+                .add(ListContent::from(text))
+                .build())
             .build();
 
         let text = TextBlock::from("parent");
         let list = IR::from(List::new(ListType::Unordered)
-                            .add(ListItem::new()
-                                 .add(ListContent::from(text))
-                                 .add(ListContent::from(nested_list))
-                                 .build())
-                            .build());
+            .add(ListItem::new()
+                .add(ListContent::from(text))
+                .add(ListContent::from(nested_list))
+                .build())
+            .build());
         let result = "-- parent\n---- child\n\n".to_string();
         assert_eq!(list.to_anki(), result);
     }

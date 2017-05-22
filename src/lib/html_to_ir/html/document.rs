@@ -21,7 +21,8 @@ impl Document {
     }
 
     pub fn convert(self) -> ir::Document {
-        let doc = self.children.into_iter()
+        let doc = self.children
+            .into_iter()
             .flat_map(|child| optimize::remove_tags(child))
             .collect::<Nodes>();
         debug!("Removed tags: {:#?}", doc);

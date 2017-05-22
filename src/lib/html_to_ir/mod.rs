@@ -76,24 +76,21 @@ mod tests {
         let content = &body("<p>Text</p>");
         let text = TextBlock::from("Text");
 
-        let result = ir::Document::new()
-            .add(ir::IR::from(text));
+        let result = ir::Document::new().add(ir::IR::from(text));
         assert_eq!(convert_file(content), result);
     }
 
     #[test]
     fn img() {
         let content = &body("<img src=\"image.png\" />");
-        let result = ir::Document::new()
-            .add(ir::IR::img("image.png"));
+        let result = ir::Document::new().add(ir::IR::img("image.png"));
         assert_eq!(convert_file(content), result);
     }
 
     #[test]
     fn pre() {
         let content = &body("<pre><span>x</span> = <span>1</span>\n\nx</pre>");
-        let result = ir::Document::new()
-            .add(ir::IR::pre("x = 1\n\nx"));
+        let result = ir::Document::new().add(ir::IR::pre("x = 1\n\nx"));
         assert_eq!(convert_file(content), result);
     }
 
@@ -102,14 +99,13 @@ mod tests {
         let content = &body("<ol><li>a</li><li>b</li></ol>");
         let ul = List::new(ListType::Ordered)
             .add(ListItem::new()
-                 .add(ListContent::from(TextBlock::from("a")))
-                 .build())
+                .add(ListContent::from(TextBlock::from("a")))
+                .build())
             .add(ListItem::new()
-                 .add(ListContent::from(TextBlock::from("b")))
-                 .build())
+                .add(ListContent::from(TextBlock::from("b")))
+                .build())
             .build();
-        let result = Document::new()
-            .add(IR::from(ul));
+        let result = Document::new().add(IR::from(ul));
         assert_eq!(convert_file(content), result);
     }
 
@@ -118,14 +114,13 @@ mod tests {
         let content = &body("<ul><li>a</li><li>b</li></ul>");
         let ul = List::new(ListType::Unordered)
             .add(ListItem::new()
-                 .add(ListContent::from(TextBlock::from("a")))
-                 .build())
+                .add(ListContent::from(TextBlock::from("a")))
+                .build())
             .add(ListItem::new()
-                 .add(ListContent::from(TextBlock::from("b")))
-                 .build())
+                .add(ListContent::from(TextBlock::from("b")))
+                .build())
             .build();
-        let result = Document::new()
-            .add(IR::from(ul));
+        let result = Document::new().add(IR::from(ul));
         assert_eq!(convert_file(content), result);
     }
 
@@ -134,17 +129,16 @@ mod tests {
         let content = &body("<ol><li>a<ol><li>aa</li></ol></li></ol>");
         let inner_ul = List::new(ListType::Ordered)
             .add(ListItem::new()
-                 .add(ListContent::from("aa"))
-                 .build())
+                .add(ListContent::from("aa"))
+                .build())
             .build();
         let outer_ul = List::new(ListType::Ordered)
             .add(ListItem::new()
-                 .add(ListContent::from("a"))
-                 .add(ListContent::from(inner_ul))
-                 .build())
+                .add(ListContent::from("a"))
+                .add(ListContent::from(inner_ul))
+                .build())
             .build();
-        let result = Document::new()
-            .add(IR::from(outer_ul));
+        let result = Document::new().add(IR::from(outer_ul));
         assert_eq!(convert_file(content), result);
     }
 
@@ -153,17 +147,16 @@ mod tests {
         let content = &body("<ol><li>a<ul><li>aa</li></ul></li></ol>");
         let inner_ul = List::new(ListType::Unordered)
             .add(ListItem::new()
-                 .add(ListContent::from("aa"))
-                 .build())
+                .add(ListContent::from("aa"))
+                .build())
             .build();
         let outer_ul = List::new(ListType::Ordered)
             .add(ListItem::new()
-                 .add(ListContent::from("a"))
-                 .add(ListContent::from(inner_ul))
-                 .build())
+                .add(ListContent::from("a"))
+                .add(ListContent::from(inner_ul))
+                .build())
             .build();
-        let result = Document::new()
-            .add(IR::from(outer_ul));
+        let result = Document::new().add(IR::from(outer_ul));
         assert_eq!(convert_file(content), result);
     }
 
@@ -172,17 +165,16 @@ mod tests {
         let content = &body("<ul><li>a<ol><li>aa</li></ol></li></ul>");
         let inner_ul = List::new(ListType::Ordered)
             .add(ListItem::new()
-                 .add(ListContent::from("aa"))
-                 .build())
+                .add(ListContent::from("aa"))
+                .build())
             .build();
         let outer_ul = List::new(ListType::Unordered)
             .add(ListItem::new()
-                 .add(ListContent::from("a"))
-                 .add(ListContent::from(inner_ul))
-                 .build())
+                .add(ListContent::from("a"))
+                .add(ListContent::from(inner_ul))
+                .build())
             .build();
-        let result = Document::new()
-            .add(IR::from(outer_ul));
+        let result = Document::new().add(IR::from(outer_ul));
         assert_eq!(convert_file(content), result);
     }
 
@@ -191,17 +183,16 @@ mod tests {
         let content = &body("<ul><li>a<ul><li>aa</li></ul></li></ul>");
         let inner_ul = List::new(ListType::Unordered)
             .add(ListItem::new()
-                 .add(ListContent::from("aa"))
-                 .build())
+                .add(ListContent::from("aa"))
+                .build())
             .build();
         let outer_ul = List::new(ListType::Unordered)
             .add(ListItem::new()
-                 .add(ListContent::from("a"))
-                 .add(ListContent::from(inner_ul))
-                 .build())
+                .add(ListContent::from("a"))
+                .add(ListContent::from(inner_ul))
+                .build())
             .build();
-        let result = Document::new()
-            .add(IR::from(outer_ul));
+        let result = Document::new().add(IR::from(outer_ul));
         assert_eq!(convert_file(content), result);
     }
 }

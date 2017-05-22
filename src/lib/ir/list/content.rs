@@ -19,7 +19,7 @@ impl From<String> for ListContent {
     }
 }
 
-impl <'a> From<&'a str> for ListContent {
+impl<'a> From<&'a str> for ListContent {
     fn from(text: &str) -> Self {
         ListContent::Text(TextBlock::from(text))
     }

@@ -25,4 +25,3 @@ impl Text {
         Text::Code(code.to_string())
     }
 }
-

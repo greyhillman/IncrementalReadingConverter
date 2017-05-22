@@ -21,9 +21,7 @@ impl Into<ir::IR> for Node {
 
                         ir::IR::img(&src)
                     }
-                    "p" => {
-                        ir::IR::from(convert_textblock(children))
-                    }
+                    "p" => ir::IR::from(convert_textblock(children)),
                     "pre" => {
                         let node = children.pop().unwrap_or(Node::Text("".to_string()));
 
@@ -37,13 +35,8 @@ impl Into<ir::IR> for Node {
 
                         ir::IR::pre(&content)
                     }
-                    "ol" => {
-                        info!("Converting ol");
-                        ir::IR::from(convert_list(ir::ListType::Ordered, children))
-                    }
-                    "ul" => {
-                        ir::IR::from(convert_list(ir::ListType::Unordered, children))
-                    }
+                    "ol" => ir::IR::from(convert_list(ir::ListType::Ordered, children)),
+                    "ul" => ir::IR::from(convert_list(ir::ListType::Unordered, children)),
                     _ => {
                         info!("Could not handle element {}", tag);
                         ir::IR::pre(&format!("Could not handle element {}.", tag))
@@ -56,18 +49,18 @@ impl Into<ir::IR> for Node {
 
 fn convert_list(style: ir::ListType, items: Nodes) -> ir::List {
     items.into_iter()
-         .filter(|ref child| child.is_element())
-         .map(|child| match child {
-             Node::Text(_) => panic!("There should be no text now"),
-             Node::Element { tag, children, .. } => {
-                 match tag.as_str() {
-                     "li" => convert_list_item(children),
-                     _ => panic!("There is a none li tag in the list"),
-                 }
-             }
-         })
-         .fold(&mut ir::List::new(style), |list, item| list.add(item))
-         .build()
+        .filter(|ref child| child.is_element())
+        .map(|child| match child {
+            Node::Text(_) => panic!("There should be no text now"),
+            Node::Element { tag, children, .. } => {
+                match tag.as_str() {
+                    "li" => convert_list_item(children),
+                    _ => panic!("There is a none li tag in the list"),
+                }
+            }
+        })
+        .fold(&mut ir::List::new(style), |list, item| list.add(item))
+        .build()
 }
 
 fn convert_list_item(children: Nodes) -> ir::ListItem {
@@ -77,14 +70,15 @@ fn convert_list_item(children: Nodes) -> ir::ListItem {
             Node::Element { tag, children, .. } => {
                 match tag.as_str() {
                     "ol" => {
-                        ir::ListContent::from(convert_list(ir::ListType::Ordered, children))
+                        ir::ListContent::from(convert_list(ir::ListType::Ordered,
+                                                           children))
                     }
                     "ul" => {
-                        ir::ListContent::from(convert_list(ir::ListType::Unordered, children))
+                        ir::ListContent::from(convert_list(ir::ListType::Unordered,
+                                                           children))
                     }
-                    _ => {
-                        panic!("Found {} tag in a list", tag)
-                    }
+                    "p" => ir::ListContent::from(convert_textblock(children)),
+                    _ => panic!("Found {} tag in a list", tag),
                 }
             }
         })
@@ -94,27 +88,25 @@ fn convert_list_item(children: Nodes) -> ir::ListItem {
 
 fn convert_textblock(nodes: Nodes) -> ir::TextBlock {
     nodes.into_iter()
-        .map(|node| {
-            match node {
-                Node::Text(x) => ir::Text::text(&x),
-                Node::Element { tag, mut children, .. } => {
-                    match tag.as_str() {
-                        "sup" => ir::Text::Sup(convert_textblock(children)),
-                        "sub" => ir::Text::Sub(convert_textblock(children)),
-                        "code" => {
-                            let node = children.pop().unwrap_or(Node::Text("".to_string()));
+        .map(|node| match node {
+            Node::Text(x) => ir::Text::text(&x),
+            Node::Element { tag, mut children, .. } => {
+                match tag.as_str() {
+                    "sup" => ir::Text::Sup(convert_textblock(children)),
+                    "sub" => ir::Text::Sub(convert_textblock(children)),
+                    "code" => {
+                        let node = children.pop().unwrap_or(Node::Text("".to_string()));
 
-                            let content = match node {
-                                Node::Text(x) => x,
-                                _ => {
-                                    println!("code tag has non-text as children");
-                                    String::new()
-                                }
-                            };
-                            ir::Text::Code(content)
-                        }
-                        _ => ir::Text::text("lmoa"),
+                        let content = match node {
+                            Node::Text(x) => x,
+                            _ => {
+                                println!("code tag has non-text as children");
+                                String::new()
+                            }
+                        };
+                        ir::Text::Code(content)
                     }
+                    _ => ir::Text::text("lmoa"),
                 }
             }
         })
