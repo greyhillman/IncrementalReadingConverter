@@ -39,7 +39,7 @@ impl Into<ir::IR> for Node {
                     }
                     "ol" => {
                         info!("Converting ol");
-                        ir::IR::from(convert_list(ir::ListType::Unordered, children))
+                        ir::IR::from(convert_list(ir::ListType::Ordered, children))
                     }
                     "ul" => {
                         ir::IR::from(convert_list(ir::ListType::Unordered, children))
