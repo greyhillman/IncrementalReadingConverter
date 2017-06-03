@@ -195,4 +195,24 @@ mod tests {
         let result = Document::new().add(IR::from(outer_ul));
         assert_eq!(convert_file(content), result);
     }
+
+    #[test]
+    fn table() {
+
+    }
+
+    #[test]
+    fn header() {
+        let content = &body("<h1>h1</h1>");
+        let result = Document::new()
+            .add(IR::header(1, "h1"));
+
+        assert_eq!(convert_file(content), result);
+
+        let content = &body("<h6>h6</h6>");
+        let result = Document::new()
+            .add(IR::header(6, "h6"));
+
+        assert_eq!(convert_file(content), result);
+    }
 }

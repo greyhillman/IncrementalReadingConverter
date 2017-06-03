@@ -28,6 +28,13 @@ impl Node {
             _ => false,
         }
     }
+
+    pub fn unwrap_text(self) -> Option<String> {
+        match self {
+            Node::Text(x) => Some(x),
+            _ => None,
+        }
+    }
 }
 
 impl<'a> From<&'a Handle> for Node {

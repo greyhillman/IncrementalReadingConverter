@@ -9,6 +9,7 @@ pub enum IR {
     Par(TextBlock),
     List(List),
     Table(Table),
+    Header(usize, String),
 }
 
 impl IR {
@@ -18,6 +19,10 @@ impl IR {
 
     pub fn pre(text: &str) -> Self {
         IR::Pre(text.to_string())
+    }
+
+    pub fn header(level: usize, text: &str) -> Self {
+        IR::Header(level, text.to_string())
     }
 }
 

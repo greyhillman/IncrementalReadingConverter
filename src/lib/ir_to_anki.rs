@@ -1,7 +1,7 @@
-//use group_lines::group_lines;
-
 extern crate itertools;
 use self::itertools::join;
+
+use group_lines::group_lines;
 
 use ir::*;
 
@@ -28,7 +28,9 @@ impl ToAnki for TextBlock {
     fn to_anki(self) -> String {
         self.into_iter()
             .map(|child| child.to_anki())
-            .collect()
+            .collect::<String>()
+            .trim()
+            .to_string()
     }
 }
 
@@ -117,9 +119,21 @@ impl ToAnki for IR {
         match self {
             IR::Img(src) => format!("<img src=\"{}\" />\n", src),
             IR::Pre(content) => format!("```{}```\n\n", content),
-            IR::Par(text) => format!("{}\n\n", text.to_anki()),
+            IR::Par(text) => {
+                let text = text.to_anki();
+
+                if !text.is_empty() {
+                    format!("{}\n\n", group_lines(&text))
+                } else {
+                    format!("")
+                }
+            }
             IR::List(list) => format!("{}\n\n", list.to_anki(1)),
             IR::Table(table) => format!("{}\n\n", table.to_anki()),
+            IR::Header(level, text) => {
+                let prefix = String::from("#").repeat(level);
+                format!("{} {}\n\n", prefix, text)
+            }
         }
     }
 }
@@ -308,5 +322,14 @@ mod tests {
                       a | b\n-----\na | b\n-----\na | b\n\n"
             .to_string();
         assert_eq!(table.to_anki(), result);
+    }
+
+    #[test]
+    fn header() {
+        let h1 = IR::header(1, "h1");
+        assert_eq!(h1.to_anki(), "# h1\n\n".to_string());
+
+        let h6 = IR::header(6, "h6");
+        assert_eq!(h6.to_anki(), "###### h6\n\n".to_string());
     }
 }

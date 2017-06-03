@@ -14,10 +14,24 @@ pub fn remove_tags(node: Node) -> Nodes {
 
             match tag.as_str() {
                 // Contents are not useful
-                "head" => Nodes::new(),
+                "head" | "button" | "noscript" | "form" | "script" | "style" => Nodes::new(),
                 // Contents are useful
-                "a" | "i" | "em" | "strong" | "mark" | "b" | "span" | "h1" | "h2" |
-                "h3" | "h4" | "h5" | "h6" => children,
+                "a" | "i" | "em" | "strong" | "mark" | "b" | "span" 
+                    | "cite" | "q" => children,
+                "dl" => {
+                    Nodes::from(Node::Element {
+                        tag: "ul".to_string(),
+                        attributes: vec![],
+                        children,
+                    })
+                }
+                "dd" | "dt" => {
+                    Nodes::from(Node::Element {
+                        tag: "li".to_string(),
+                        attributes: vec![],
+                        children,
+                    })
+                }
                 // Contents are useful but tags are containers
                 "nav" | "header" | "footer" | "body" | "html" => {
                     let tag = "div".to_string();

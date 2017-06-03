@@ -43,7 +43,11 @@ fn main() {
     let debug = matches.is_present("debug");
     let new_contents = anki_convert::convert_file(debug, &file_type, &contents);
 
-    let output_filename = filename.to_string() + ".out";
+    let output_filename = if debug {
+        format!("{}.out.debug", filename.to_string())
+    } else {
+        format!("{}.out", filename.to_string())
+    };
     let output_file_path = &Path::new(&output_filename);
     let mut output_file = File::create(output_file_path).expect("Failed to create file.");
 
